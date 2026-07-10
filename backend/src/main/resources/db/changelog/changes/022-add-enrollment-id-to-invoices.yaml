@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 022-add-enrollment-id-to-invoices
+      author: drissman
+      changes:
+        - addColumn:
+            tableName: invoices
+            columns:
+              - column:
+                  name: enrollment_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+        - addForeignKeyConstraint:
+            baseTableName: invoices
+            baseColumnNames: enrollment_id
+            referencedTableName: enrollments
+            referencedColumnNames: id
+            constraintName: fk_invoices_enrollment
+            onDelete: SET NULL
+      comment: "Add enrollment_id to invoices for UML alignment. booking_id kept for backward compatibility."

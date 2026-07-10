@@ -1,0 +1,69 @@
+databaseChangeLog:
+  - changeSet:
+      id: 030-create-training-periods-table
+      author: drissman
+      changes:
+        - createTable:
+            tableName: training_periods
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: school_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_training_periods_school
+                    references: schools(id)
+              - column:
+                  name: offer_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_training_periods_offer
+                    references: offers(id)
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: start_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: end_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: max_students
+                  type: INTEGER
+                  defaultValueNumeric: 30
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: DRAFT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: enrollment_deadline
+                  type: DATE
+              - column:
+                  name: schedule_description
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP

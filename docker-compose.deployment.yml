@@ -1,0 +1,86 @@
+services:
+  # === FRONTEND (Next.js) ===
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: drissman-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080/api
+    depends_on:
+      - backend
+    networks:
+      - drissman-net
+
+  # === BACKEND (Spring Boot) ===
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: drissman-backend
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/drissman
+      - SPRING_DATASOURCE_USERNAME=drissman
+      - SPRING_DATASOURCE_PASSWORD=drissman_secret
+      - SPRING_R2DBC_URL=r2dbc:postgresql://postgres:5432/drissman
+      - SPRING_R2DBC_USERNAME=drissman
+      - SPRING_R2DBC_PASSWORD=drissman_secret
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - drissman-net
+
+  # === DATABASE (PostgreSQL) ===
+  postgres:
+    image: postgres:16-alpine
+    container_name: drissman-postgres-prod
+    restart: always
+    environment:
+      - POSTGRES_DB=drissman
+      - POSTGRES_USER=drissman
+      - POSTGRES_PASSWORD=drissman_secret
+    volumes:
+      - drissman_pg_data:/var/lib/postgresql/data
+    networks:
+      - drissman-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U drissman" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # === CACHE (Redis) ===
+  redis:
+    image: redis:7-alpine
+    container_name: drissman-redis-prod
+    restart: always
+    volumes:
+      - drissman_redis_data:/data
+    networks:
+      - drissman-net
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  drissman_pg_data:
+  drissman_redis_data:
+
+
+networks:
+  drissman-net:
+    driver: bridge

@@ -1,0 +1,1341 @@
+﻿ÉCOLE NATIONALE SUPÉRIEURE POLYTECHNIQUE DE
+YAOUNDÉ
+DÉPARTEMENT DE GÉNIE INFORMATIQUE
+DRISSMAN
+Rapport du projet d’Administration réseau : Gestion des
+auto-écoles
+Présenté par :
+DJAMPA NJUITCHA ANICET (14%)Matricule :22P232
+DONFACK BOTREL CYRILLE (14%)Matricule :22P230
+MVOGO MVOGO DAVID ROLAND (14,5%)Matricule :22P226
+OYIE’E MVA’A JAPHET (14,5%)Matricule :21P191
+SAHA NZOYEM PHILIPE OWEN (14%)Matricule :22P352
+Niveau :4èmeannée Génie Informatique
+Responsable :Pr.Dr.Ing DJOTIO Thomas
+Année académique : 2025-2026
+Table des matières
+Liste des figures 4
+Liste des tableaux 5
+Glossaire 6
+Introduction 8
+1 CONTEXTE ET PRÉSENTATION DU PROJET 9
+1.1 Définition et importance d’une marketplace d’auto école . . . . . . . . 9
+1.2 Contexte spécifique du Cameroun . . . . . . . . . . . . . . . . . . . . . 9
+1.3 Présentation du projet Drissman . . . . . . . . . . . . . . . . . . . . . 10
+1.3.1 Objectifs du projet . . . . . . . . . . . . . . . . . . . . . . . . . 10
+2 MÉTHODOLOGIE ET ANALYSE 12
+2.1 Méthodologie utilisée . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+2.2 Analyse des besoins . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+2.2.1 Expression des besoins . . . . . . . . . . . . . . . . . . . . . . . 12
+2.2.2 Exigences fonctionnelles . . . . . . . . . . . . . . . . . . . . . . 13
+2.2.3 Exigences non fonctionnelles . . . . . . . . . . . . . . . . . . . . 14
+2.3 Diagrammes d’analyse . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+2.3.1 Diagramme de contexte . . . . . . . . . . . . . . . . . . . . . . 14
+2.3.2 Diagramme de package . . . . . . . . . . . . . . . . . . . . . . . 15
+2.3.3 Diagramme de cas d’utilisation . . . . . . . . . . . . . . . . . . 16
+2.3.4 Diagramme de cas d’utilisation . . . . . . . . . . . . . . . . . . 17
+2.3.5 Diagramme de classes métier . . . . . . . . . . . . . . . . . . . . 19
+3 CONCEPTION DU SYSTÈME 21
+3.1 Architecture globale du système . . . . . . . . . . . . . . . . . . . . . . 21
+3.1.1 Choix d’une architecture Client–Serveur . . . . . . . . . . . . . 21
+3.1.2 Architecture en couches (Multi-tier) . . . . . . . . . . . . . . . . 22
+3.2 Conception détaillée des composants . . . . . . . . . . . . . . . . . . . 22
+3.2.1 Conception du Frontend (Next.js) . . . . . . . . . . . . . . . . . 22
+3.2.2 Conception du Backend (Spring Boot) . . . . . . . . . . . . . . 23
+3.2.3 Conception de la base de données (PostgreSQL) . . . . . . . . . 23
+3.2.4 Intégration de la Géolocalisation . . . . . . . . . . . . . . . . . . 23
+3.3 Sécurité et Flux de données . . . . . . . . . . . . . . . . . . . . . . . . 24
+3.3.1 Principe de fonctionnement (Workflow) . . . . . . . . . . . . . . 24
+3.3.2 Sécurité et Authentification . . . . . . . . . . . . . . . . . . . . 24
+3.4 Diagrammes de conception . . . . . . . . . . . . . . . . . . . . . . . . . 25
+1
+Table des matières
+3.4.1 Diagrammes de séquences techniques . . . . . . . . . . . . . . . 25
+3.4.2 Diagramme d’état-transition . . . . . . . . . . . . . . . . . . . . 28
+4 IMPLÉMENTATION ET CHOIX TECHNOLOGIQUES 30
+4.1 Choix technologiques globaux et philosophie . . . . . . . . . . . . . . . 30
+4.2 Implémentation du frontend (Next.js) . . . . . . . . . . . . . . . . . . . 30
+4.2.1 Rôle et justification . . . . . . . . . . . . . . . . . . . . . . . . . 30
+4.2.2 Organisation technique du code . . . . . . . . . . . . . . . . . . 31
+4.3 Implémentation du backend (Spring Boot) . . . . . . . . . . . . . . . . 31
+4.3.1 Rôle et justification . . . . . . . . . . . . . . . . . . . . . . . . . 31
+4.3.2 Architecture interne en couches . . . . . . . . . . . . . . . . . . 31
+4.4 Implémentation de la base de données (PostgreSQL) . . . . . . . . . . 32
+4.5 Implémentation de la géolocalisation . . . . . . . . . . . . . . . . . . . 32
+4.6 Communication et Sécurité . . . . . . . . . . . . . . . . . . . . . . . . . 32
+4.7 Conclusion du chapitre . . . . . . . . . . . . . . . . . . . . . . . . . . . 33
+5 DIFFICULTÉS RENCONTRÉES ET PERSPECTIVES 34
+5.1 Analyse des difficultés rencontrées . . . . . . . . . . . . . . . . . . . . . 34
+5.1.1 Complexité de la formalisation des besoins multi-acteurs . . . . 34
+5.1.2 Défis de l’intégration Full Stack et des contrats d’interface . . . 34
+5.1.3 Gestion avancée de l’authentification et des autorisations (RBAC) 35
+5.1.4 Modélisation de l’intégrité transactionnelle . . . . . . . . . . . . 35
+5.1.5 Contraintes techniques de la géolocalisation . . . . . . . . . . . 35
+5.1.6 Contraintes méthodologiques et temporelles . . . . . . . . . . . 35
+5.1.7 Complexité de la gestion des Crédits d’Heures . . . . . . . . . . 35
+5.1.8 Gestion du Planning Multi-Acteurs . . . . . . . . . . . . . . . . 36
+5.2 Perspectives d’évolution et valorisation . . . . . . . . . . . . . . . . . . 36
+5.2.1 Enrichissement fonctionnel et expérience utilisateur . . . . . . . 36
+5.2.2 Durcissement technique et scalabilité . . . . . . . . . . . . . . . 36
+Conclusion générale 37
+Références Bibliographiques 38
+A GUIDE DE DÉPLOIEMENT 39
+A.1 Vue d’ensemble . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 39
+A.2 Prérequis . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 39
+A.2.1 Pour Développement Local . . . . . . . . . . . . . . . . . . . . . 39
+A.2.2 Pour Déploiement Docker . . . . . . . . . . . . . . . . . . . . . 39
+A.2.3 Pour Déploiement Cloud . . . . . . . . . . . . . . . . . . . . . . 39
+A.3 Architecture du Projet . . . . . . . . . . . . . . . . . . . . . . . . . . . 40
+A.4 Déploiement Local (Développement) . . . . . . . . . . . . . . . . . . . 40
+A.4.1 Étape 1 : Cloner le Repository . . . . . . . . . . . . . . . . . . . 40
+A.4.2 Étape 2 : Configuration de la Base de Données . . . . . . . . . . 40
+A.4.3 Étape 3 : Démarrer le Backend . . . . . . . . . . . . . . . . . . 40
+A.4.4 Étape 4 : Démarrer le Frontend . . . . . . . . . . . . . . . . . . 40
+A.5 Déploiement Docker (Production) . . . . . . . . . . . . . . . . . . . . . 41
+A.5.1 Vérification de Docker . . . . . . . . . . . . . . . . . . . . . . . 41
+A.5.2 Configuration . . . . . . . . . . . . . . . . . . . . . . . . . . . . 41
+Page 2 sur 55 Drissman
+Table des matières
+A.5.3 Build et Démarrage . . . . . . . . . . . . . . . . . . . . . . . . . 41
+A.5.4 Vérification des Conteneurs . . . . . . . . . . . . . . . . . . . . 41
+A.5.5 Commandes Utiles . . . . . . . . . . . . . . . . . . . . . . . . . 41
+A.6 Déploiement Cloud (Vercel + Railway) . . . . . . . . . . . . . . . . . . 41
+A.6.1 Frontend sur Vercel . . . . . . . . . . . . . . . . . . . . . . . . . 41
+A.6.2 Backend sur Railway (Optionnel) . . . . . . . . . . . . . . . . . 42
+A.7 Configuration des Variables d’Environnement . . . . . . . . . . . . . . 42
+A.7.1 Frontend (Next.js) . . . . . . . . . . . . . . . . . . . . . . . . . 42
+A.7.2 Backend (Spring Boot) . . . . . . . . . . . . . . . . . . . . . . . 43
+A.8 Troubleshooting . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 43
+A.8.1 Problème : Le Frontend ne se connecte pas au Backend . . . . . 43
+A.8.2 Problème : Erreur de connexion PostgreSQL . . . . . . . . . . . 43
+A.8.3 Problème : Build Docker échoue . . . . . . . . . . . . . . . . . . 43
+A.9 Checklist de Déploiement . . . . . . . . . . . . . . . . . . . . . . . . . . 43
+A.9.1 Avant le Déploiement . . . . . . . . . . . . . . . . . . . . . . . . 43
+A.9.2 Déploiement Docker . . . . . . . . . . . . . . . . . . . . . . . . 44
+A.9.3 Déploiement Cloud . . . . . . . . . . . . . . . . . . . . . . . . . 44
+A.10 Vue d’ensemble . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 44
+A.11 Configuration Requise et Accès . . . . . . . . . . . . . . . . . . . . . . 44
+A.11.1 Navigateurs Supportés . . . . . . . . . . . . . . . . . . . . . . . 44
+A.11.2 Compatibilité Mobile . . . . . . . . . . . . . . . . . . . . . . . . 45
+A.12 Création de Compte . . . . . . . . . . . . . . . . . . . . . . . . . . . . 46
+A.12.1 Pour les Étudiants . . . . . . . . . . . . . . . . . . . . . . . . . 46
+A.12.2 Pour les Administrateurs d’Auto-École . . . . . . . . . . . . . . 47
+A.13 Connexion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 47
+A.13.1 Processus de Connexion . . . . . . . . . . . . . . . . . . . . . . 47
+A.14 Fonctionnalités Étudiant . . . . . . . . . . . . . . . . . . . . . . . . . . 48
+A.14.1 Recherche d’Auto-Écoles . . . . . . . . . . . . . . . . . . . . . . 48
+A.14.2 Achat d’une formation (Inscription) . . . . . . . . . . . . . . . . 49
+A.14.3 Planification des Séances (Utilisation du Crédit) . . . . . . . . . 50
+A.14.4 Mes Réservations et Historique . . . . . . . . . . . . . . . . . . 50
+A.14.5 Suivi de Progression . . . . . . . . . . . . . . . . . . . . . . . . 51
+A.15 Fonctionnalités Administrateur (Gérant) . . . . . . . . . . . . . . . . . 53
+A.15.1 Tableau de Bord Administrateur . . . . . . . . . . . . . . . . . 53
+A.15.2 Gestion des Offres . . . . . . . . . . . . . . . . . . . . . . . . . 53
+A.15.3 Gestion des Disponibilités . . . . . . . . . . . . . . . . . . . . . 54
+A.15.4 Gestion du Personnel (Moniteurs) . . . . . . . . . . . . . . . . . 55
+A.15.5 Gestion du Planning et Affectation . . . . . . . . . . . . . . . . 55
+A.16 Navigation et Interface Utilisateur . . . . . . . . . . . . . . . . . . . . . 55
+A.16.1 Menu Principal . . . . . . . . . . . . . . . . . . . . . . . . . . . 55
+A.16.2 Thème Visuel . . . . . . . . . . . . . . . . . . . . . . . . . . . . 55
+A.16.3 Adaptation (Responsive) . . . . . . . . . . . . . . . . . . . . . . 55
+Page 3 sur 55 Drissman
+Table des figures
+2.1 Diagramme de contexte du système Drissman . . . . . . . . . . . . . . 15
+2.2 Diagramme de package du système Drissman . . . . . . . . . . . . . . . 16
+2.3 Diagramme de cas d’utilisation global du système Drissman . . . . . . 17
+3.1 Diagramme de cas deploiement du système Drissman . . . . . . . . . . 22
+3.2 Diagramme de séquence technique de l’authentification . . . . . . . . . 25
+3.3 Diagramme de séquence technique : Achat d’une formation . . . . . . . 26
+3.4 Diagramme de séquence technique : Planification d’une session . . . . . 27
+3.5 Diagramme de séquence technique : Consulter sa progression . . . . . . 28
+3.6 Diagramme d’état-transition du paiement d’une formation . . . . . . . 28
+3.7 Diagramme d’état-transition du séance de cours . . . . . . . . . . . . . 29
+A.1 Page d’accueil interface web . . . . . . . . . . . . . . . . . . . . . . . . 45
+A.2 Page d’accueil sur téléphone . . . . . . . . . . . . . . . . . . . . . . . . 46
+A.3 Formulaire d’inscription élève . . . . . . . . . . . . . . . . . . . . . . . 47
+A.4 Formulaire d’inscription partenaire (Auto-école) . . . . . . . . . . . . . 47
+A.5 Tableau de bord de l’étudiant . . . . . . . . . . . . . . . . . . . . . . . 48
+A.6 Interface de recherche d’une auto-école . . . . . . . . . . . . . . . . . . 48
+A.7 Filtres de recherche . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 49
+A.8 Sélection d’une offre de formation . . . . . . . . . . . . . . . . . . . . . 49
+A.9 Interface de paiement . . . . . . . . . . . . . . . . . . . . . . . . . . . . 50
+A.10 Calendrier de planification des séances . . . . . . . . . . . . . . . . . . 50
+A.11 Liste des réservations de l’élève . . . . . . . . . . . . . . . . . . . . . . 51
+A.12 Tableau de bord de progression . . . . . . . . . . . . . . . . . . . . . . 52
+A.13 Tableau de bord administrateur . . . . . . . . . . . . . . . . . . . . . . 53
+A.14 Liste des offres de formation . . . . . . . . . . . . . . . . . . . . . . . . 53
+A.15 Création d’une nouvelle offre . . . . . . . . . . . . . . . . . . . . . . . . 54
+A.16 Gestion des créneaux d’ouverture . . . . . . . . . . . . . . . . . . . . . 54
+A.17 Ajout d’un créneau . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 54
+4
+Liste des tableaux
+2.1 Description du cas d’utilisation : S’authentifier . . . . . . . . . . . . . . 18
+2.2 Description du cas d’utilisation : Acheter unr formation . . . . . . . . . 18
+2.3 Description du cas d’utilisation : Planifier une Séance . . . . . . . . . . 19
+2.4 Description du cas d’utilisation : Gérer le Personnel . . . . . . . . . . . 19
+A.1 Commandes Docker utiles . . . . . . . . . . . . . . . . . . . . . . . . . 41
+A.2 Détail d’une séance . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 51
+A.3 Adaptation responsive de l’interface . . . . . . . . . . . . . . . . . . . . 55
+5
+Glossaire
+API (Application Programming Interface)Interface de programmation permet-
+tantàdeuxapplicationsdecommuniquerentreelles.DansDrissman,l’APIREST
+permet au Frontend (Next.js) de dialoguer avec le Backend (Spring Boot).
+BackendPartie serveur de l’application, invisible pour l’utilisateur, qui gère la logique
+métier, les calculs et l’accès à la base de données. Il est développé ici en Java avec
+Spring Boot.
+CORS (Cross-Origin Resource Sharing)Mécanisme de sécurité permettant de
+restreindre les ressources d’une page web demandées à partir d’un autre domaine
+(ex : autoriser uniquement le frontend Drissman à appeler l’API).
+DTO (Data Transfer Object)Objet utilisé pour transporter des données entre le
+client et le serveur. Il permet de filtrer les informations sensibles (comme les mots
+de passe) avant de les envoyer au Frontend.
+FrontendPartie cliente de l’application, visible et interactive pour l’utilisateur dans
+son navigateur. Elle est développée ici avec Next.js.
+IAM (Identity and Access Management)Gestion des identités et des accès. En-
+semble des processus permettant de gérer les utilisateurs et leurs droits d’accès
+au sein du système (authentification et autorisation).
+JDK (Java Development Kit)Kit de développement Java. Ensemble d’outils logi-
+ciels (compilateur, JRE, bibliothèques) nécessaire pour développer et compiler le
+backend Spring Boot.
+JSON (JavaScript Object Notation)Formatstandardlégerpourl’échangededon-
+néesstructurées.Ilestutilisépourformaterlesréponsesenvoyéesparl’APIREST
+au Frontend.
+JWT (JSON Web Token)Standardouvertutilisépourcréerdesjetonsd’accèsper-
+mettant une authentification sécurisée et "stateless" (sans état) entre le client et
+le serveur.
+MarketplacePlace de marché en ligne mettant en relation des acheteurs (élèves) et
+des vendeurs (auto-écoles) au sein d’une plateforme centralisée.
+Mobile MoneyMoyen de paiement électronique via téléphone mobile (MTN Mobile
+Money, Orange Money), utilisé dans le système pour régler les réservations.
+MVC (Modèle-Vue-Contrôleur)Motif d’architecture logicielle séparant les don-
+nées (Modèle), l’interface utilisateur (Vue) et la logique de contrôle (Contrôleur),
+utilisé par Spring Boot.
+ORM (Object-Relational Mapping)Technique de programmation permettant de
+convertirdesdonnéesentreunlangageorientéobjet(Java)etunebasededonnées
+relationnelle (PostgreSQL). Drissman utilise Hibernate via Spring Data JPA.
+6
+Liste des tableaux
+PostgreSQLSystème de gestion de base de données relationnelle objet (SGBDRO)
+open-source utilisé pour assurer la persistance des données de Drissman.
+RBAC (Role-Based Access Control)Méthode de restriction d’accès basée sur les
+rôles des utilisateurs (ex : Étudiant, Administrateur Auto-École, Administrateur
+Système).
+REST (Representational State Transfer)Styled’architecturelogicielledéfinissant
+un ensemble de contraintes pour la création de services web. Les contrôleurs de
+Drissman exposent des "endpoints" RESTful.
+SEO (Search Engine Optimization)Optimisation pour les moteurs de recherche.
+L’utilisation du rendu côté serveur (SSR) avec Next.js permet d’améliorer le
+référencement de la plateforme.
+SQL (Structured Query Language)Langage de requête structurée normalisé ser-
+vant à exploiter des bases de données relationnelles comme PostgreSQL.
+SSR (Server-Side Rendering)Technique de rendu où le code HTML de la page
+web est généré sur le serveur plutôt que dans le navigateur, améliorant la perfor-
+mance initiale et le SEO.
+UML (Unified Modeling Language)Langage de modélisation graphique standar-
+disé utilisé pour visualiser, spécifier, construire et documenter les artefacts du
+système logiciel.
+USSD (Unstructured Supplementary Service Data)Protocole de communica-
+tion utilisé par les téléphones mobiles (GSM) pour envoyer des messages courts,
+utilisé notamment pour la validation du code PIN lors des transactions Mobile
+Money.
+Page 7 sur 55 Drissman
+Introduction
+La transformation numérique constitue aujourd’hui un levier incontournable d’op-
+timisation des processus et d’amélioration de l’expérience utilisateur. Si de nombreux
+secteurs ont déjà opéré leur mutation vers des écosystèmes digitaux, le domaine de la
+formation à la conduite automobile reste encore largement marqué par des pratiques
+traditionnelles. Gestion manuelle, faible centralisation de l’information et manque de
+visibilitédesoffressontautantdefreinsquicomplexifientleparcoursdesélèvesconduc-
+teurs et la gestion quotidienne des établissements. Face à ces constats, l’adoption d’une
+plateforme de type marketplace apparaît comme une réponse structurante. En centra-
+lisant les interactions au sein d’un écosystème unique, ce modèle permet non seulement
+de fluidifier la mise en relation, mais aussi d’apporter la transparence et la flexibilité
+attendues par les usagers actuels. C’est dans cette optique qu’a été conçu le projet
+Drissman. Il s’agit d’une plateforme web dédiée à la digitalisation complète du pro-
+cessus de formation à la conduite, depuis la recherche géolocalisée d’une auto-école
+jusqu’au suivi pédagogique. L’ambition de Drissman est double : offrir aux candidats
+un outil de recherche intuitif et sécurisé, tout en dotant les auto-écoles d’une solution
+de gestion performante pour optimiser leur activité. Ce projet, qui s’inscrit dans une
+démarche d’ingénierie logicielle complète, repose sur une architecture web moderne et
+modulaire, conçue pour garantir robustesse et évolutivité. Le présent rapport détaille
+les étapes de cette réalisation. Nous aborderons dans un premier temps l’analyse du
+contexte et des besoins, avant de présenter l’architecture technique et la conception
+de la solution. Enfin, nous détaillerons la phase d’implémentation et les perspectives
+d’évolution de la plateforme.
+8
+Chapitre 1
+CONTEXTEETPRÉSENTATIONDU
+PROJET
+1.1 Définitionetimportanced’unemarketplaced’auto
+école
+Avecl’essordel’économienumérique,lemodèledelamarketplace(placedemarché)
+s’est imposé comme une solution incontournable pour fluidifier les échanges. Concrè-
+tement, il s’agit d’une plateforme intermédiaire permettant de mettre en relation des
+offreurs de services et des demandeurs, tout en centralisant la gestion des transactions
+et des interactions. Appliquée au domaine de l’apprentissage de la conduite, une mar-
+ketplace d’auto-écoles agit comme un tiers de confiance numérique. Elle regroupe au
+sein d’un écosystème unique l’ensemble des services nécessaires à la formation : re-
+cherche géolocalisée d’établissements, comparaison des tarifs, réservation de séances,
+paiements sécurisés et suivi pédagogique. L’enjeu d’une telle solution est la modernisa-
+tion d’un secteur resté encore largement manuel et fragmenté. Les démarches tradition-
+nelles d’inscription sont souvent chronophages et manquent de transparence, obligeant
+les candidats à de multiples déplacements. La digitalisation via une plateforme centra-
+lisée permet de répondre à ces problématiques en offrant :
+— Une visibilité accrue pour les auto-écoles
+— Une transparence totale sur les offres et les prix
+— Une simplification administrative pour les deux parties
+1.2 Contexte spécifique du Cameroun
+Le Cameroun connaît, depuis plusieurs années, une croissance progressive de l’usage
+des technologies numériques, portée par la démocratisation des smartphones, l’exten-
+sion de la couverture Internet mobile et l’essor des services numériques dans les do-
+maines de l’éducation, du commerce et des services administratifs. Toutefois, cette
+transition numérique demeure inégale selon les secteurs d’activité. Le domaine de la
+formation à la conduite automobile, et plus particulièrement l’organisation des auto-
+écoles, reste largement marqué par des pratiques traditionnelles, peu structurées et
+faiblement digitalisées. Dans ce contexte, la mise en place d’une plateforme web telle
+que Drissman s’inscrit comme une réponse pertinente aux besoins spécifiques d’une
+9
+Chapitre 1. CONTEXTE ET PRÉSENTATION DU PROJET
+communauté camerounaise, en tenant compte des réalités socio-économiques, organi-
+sationnelles et technologiques du pays.
+1.3 Présentation du projet Drissman
+Le projet Drissman se définit comme une plateforme web de mise en relation et
+de gestion dédiée à l’écosystème des auto-écoles. Son ambition est de dématérialiser
+l’intégralité du processus de formation. Pour garantir sa pérennité et ses performances,
+Drissman repose sur une architecture technique moderne et robuste :
+— Frontend : Développé avec Next.js, il offre une interface utilisateur réactive, fluide
+et optimisée pour le référencement (SEO).
+— Backend : Conçu en Java avec Spring Boot, il assure la solidité de la logique
+métier, la sécurité des données et la gestion des API.
+— Données : La persistance est gérée par PostgreSQL, un système de gestion de
+base de données relationnelle reconnu pour sa fiabilité.
+— Géolocalisation : L’intégration de la bibliothèque Leaflet permet un affichage
+interactif des établissements sur carte, facilitant la recherche par proximité.
+Cette combinaison technologique positionne Drissman comme une solution complète,
+alliant ergonomie pour l’utilisateur final et rigueur de l’ingénierie logicielle.
+1.3.1 Objectifs du projet
+La finalité du projet est de livrer une plateforme web fiable, sécurisée et évolutive.
+Ces objectifs se déclinent selon deux axes :
+Objectifs fonctionnels
+— Recherche et Comparaison : Permettre aux élèves de filtrer les auto-écoles selon
+des critères précis (localisation, prix, avis).
+— Achat de Forfaits et Gestion de Crédits : Permettre l’achat en ligne d’offres de
+formation (Packs) qui créditent un solde d’heures à l’élève.
+— Planification Flexible : Offrir un système de réservation de séances multiples
+(planification) basé sur le solde d’heures disponible.
+— Suivi Pédagogique : Digitaliser le livret d’apprentissage (historique des séances,
+progression de l’élève).
+— Évaluation : Intégrer un système de notation pour garantir la qualité des services
+par la preuve sociale.
+— Gestion RH et Administrative : Fournir aux gérants d’auto-écoles un tableau de
+bord pour gérer leur personnel (moniteurs), leurs inscriptions et leur planning
+global.
+Objectifs techniques
+Entre autres nous devons mettre en œuvre une architecture modulaire basée sur des
+standards industriels,garantir la confidentialité et l’intégrité des données utilisateurs et
+assurer la scalabilité (montée en charge) et la maintenabilité du code.Enfin , le respect
+Page 10 sur 55 Drissman
+Chapitre 1. CONTEXTE ET PRÉSENTATION DU PROJET
+desbonnespratiquesdedéveloppementdevaitêtremiseenavantdansl’implémentation
+de nos solutions.
+Page 11 sur 55 Drissman
+Chapitre 2
+MÉTHODOLOGIE ET ANALYSE
+2.1 Méthodologie utilisée
+Pour mener à bien le projet Drissman, nous avons opté pour une approche structu-
+rée basée sur le modèle en cascade (Waterfall). Ce choix méthodologique, caractérisé
+par une progression séquentielle, s’avère particulièrement pertinent dans ce contexte
+académique pour plusieurs raisons :
+— Stabilité du périmètre : Les fonctionnalités clés sont clairement identifiées dès le
+départ, limitant le besoin d’itérations constantes.
+— Logique documentaire : On s’est concentré ici dans la mise en place des dia-
+grammes UML avant l’écriture du code, mettant ainsi en place les bases solides
+pour l’implémentation de la solution.
+— Validation par étapes : Elle permet de valider chaque phase (analyse, conception)
+avant d’entamer la suivante, réduisant ainsi le risque d’erreurs structurelles lors
+du développement.
+La réalisation du projet s’est donc articulée autour des quatre phases classiques allant
+de l’analyse et la spécification, en passant par la conception , la modélisation et en
+terminant par l’implémentation et les tests.
+2.2 Analyse des besoins
+L’analysedesbesoinsconstitueuneétapefondamentale:ellepermetdetraduireune
+idéegénérale(“créerunemarketplaced’auto-écoles”)enunensembled’exigencesclaires,
+vérifiables et implémentables. Dans Drissman, les besoins proviennent principalement
+de trois groupes d’acteurs : les élèves conducteurs (étudiants), les gérants d’auto-écoles
+et le personnel enseignant (moniteurs).
+2.2.1 Expression des besoins
+Dans cette partie , nous décrivons le problème à résoudre et les attentes des utili-
+sateurs, sans encore détailler la solution technique.
+12
+Chapitre 2. MÉTHODOLOGIE ET ANALYSE
+Besoins des élèves conducteurs
+Les élèves doivent trouver facilement une auto-école adaptée à leur localisation et
+à leur budget; Pouvoir comparer les auto-écoles (prix, disponibilité, avis). Ils doivent
+pouvoir souscrire à des offres de formation (Packs) et payer en ligne. Une fois inscrits,
+ils doivent pouvoir planifier leurs séances de conduite de manière flexible en fonction de
+leurs disponibilités et de leur solde d’heures. Ils doivent pouvoir suivre leur progression
+et noter l’auto-école après formation.
+Besoins des gérants d’auto-écoles
+Les gérants doivent créer et gérer un profil (informations, localisation, tarifs, des-
+cription) et publier des offres de formation. Ils ont besoin d’outils pour gérer leur
+personnel (création et gestion des moniteurs). Ils doivent avoir une vue globale sur
+le planning de l’école et pouvoir affecter des moniteurs aux séances réservées par les
+élèves. Ils doivent également pouvoir suivre les inscriptions et les paiements.
+Besoins des moniteurs
+Le personnel enseignant doit pouvoir consulter son propre planning de cours et
+valider la présence des élèves aux séances (suivi pédagogique).
+2.2.2 Exigences fonctionnelles
+Les exigences fonctionnelles décrivent ce que le système doit faire, sous forme de
+fonctionnalités attendues. Elles peuvent être organisées par modules.
+Gestion des utilisateurs et authentification
+Le système doit permettre l’inscription et la connexion des utilisateurs (Visiteurs,
+Étudiants,Gérants,Moniteurs).Lesystèmedoitgérerlesrôlesetautorisations(RBAC:
+Role-Based Access Control).
+Recherche et consultation des auto-écoles
+Le système doit permettre la recherche d’auto-écoles par localisation, tarif, note.
+Le système doit afficher une fiche détaillée d’auto-école et les localiser sur une carte
+interactive.
+Achat et Gestion des Crédits
+Le système doit permettre l’achat de "Packs" de formation (ex : 20h de conduite).
+Le système doit gérer un solde d’heures pour chaque inscription (heures achetées vs
+heures consommées).
+Page 13 sur 55 Drissman
+Chapitre 2. MÉTHODOLOGIE ET ANALYSE
+Planification des Séances (Booking)
+Le système doit permettre à un élève de planifier plusieurs séances (créneaux) en
+débitant son solde d’heures. Le système doit permettre au gérant d’assigner un moni-
+teur à chaque séance. Le système doit gérer les états d’une séance (Planifiée, Validée,
+Annulée).
+Paiement et transaction
+Le système doit permettre le paiement en ligne des forfaits via Mobile Money. Le
+système doit enregistrer chaque transaction et générer une facture.
+Suivi de formation et RH
+Le système doit permettre à l’élève de consulter sa progression. Le système doit
+permettre au gérant de gérer la liste de ses moniteurs (Recrutement/Licenciement
+virtuel).
+2.2.3 Exigences non fonctionnelles
+— Qualité et maintenabilité
+— Sécurité
+— Réalisation des tests
+— Respect des contraintes technologiques
+2.3 Diagrammes d’analyse
+La modélisation des diagrammes d’analyse est essentielle pour comprendre la struc-
+tureetlecomportementdeDrissman.Cettesectionprésentelesprincipauxdiagrammes
+UML utilisés dans l’analyse du système.
+2.3.1 Diagramme de contexte
+Le diagramme de contexte illustre les principaux acteurs externes interagissant avec
+le système, ainsi que les flux d’informations.
+Page 14 sur 55 Drissman
+Chapitre 2. MÉTHODOLOGIE ET ANALYSE
+Figure 2.1– Diagramme de contexte du système Drissman
+Les acteurs principaux identifiés sont :
+— L’Étudiant, qui utilise le système pour acheter des packs, planifier ses séances et
+suivre sa progression.
+— Le Gérant (Directeur), qui gère le profil de son auto-école, les offres, le personnel
+(moniteurs) et supervise le planning global.
+— Le Moniteur, qui consulte son planning personnel et valide les séances.
+— Le Visiteur, qui explore le catalogue avant de s’inscrire ou de créer son auto-école.
+Les acteurs secondaires (systèmes externes) sont :
+— Le Système de Paiement Mobile (MTN/Orange Money), qui traite les paiements.
+— Le Service de Stockage d’Images et le Service Email.
+2.3.2 Diagramme de package
+Le diagramme de package ci-dessous illustre l’architecture modulaire du système
+Drissman. Cette organisation en domaines fonctionnels distincts garantit une sépara-
+tion claire des responsabilités (Separation of Concerns).
+L’architecture repose sur cinq blocs interconnectés :
+—GestiondesUtilisateurs:Socle transversal gérant l’identité (IAM)et les rôles.
+—Gestion des Auto-écoles et Ressources: Module administratif permettant
+la configuration de l’établissement et la gestion RH (Moniteurs).
+Page 15 sur 55 Drissman
+Chapitre 2. MÉTHODOLOGIE ET ANALYSE
+—Gestion Commerciale et Financière: Cœur du modèle économique, ce mo-
+dule gère le catalogue de packs, les paiements mobiles et leportefeuille de crédits
+des élèves.
+—Gestion du Planning et des Séances: Module opérationnel qui consomme
+les crédits pour valider les réservations.
+—Gestion de la Progression: Module analytique assurant le suivi pédagogique
+post-séance.
+Figure 2.2– Diagramme de package du système Drissman
+2.3.3 Diagramme de cas d’utilisation
+Ce diagramme synthétise les fonctionnalités offertes aux différents acteurs du sys-
+tème (Visiteur, Étudiant, Moniteur, Gérant). Il met en évidence la distinction entre
+l’acquisition de droits (Achat de Pack) et leur consommation (Planification de Séance).
+Page 16 sur 55 Drissman
+Chapitre 2. MÉTHODOLOGIE ET ANALYSE
+Figure 2.3– Diagramme de cas d’utilisation global du système Drissman
+2.3.4 Diagramme de cas d’utilisation
+Description de quelques cas d’utilisation
+Cette section détaille les cas d’utilisation majeurs, reflétant la logique d’achat de
+packs et de planification flexible.
+Page 17 sur 55 Drissman
+Chapitre 2. MÉTHODOLOGIE ET ANALYSE
+Cas d’utilisation S’authentifier
+Objectif Permettre à un utilisateur de se connecter au système.
+Acteurs princi-
+pauxÉtudiant, Gérant, Moniteur
+Préconditions L’utilisateur possède un compte valide.
+Postconditions L’utilisateur est authentifié (Token JWT généré).
+Scénario nomi-
+nal 1. L’utilisateur saisit ses identifiants.
+2. Le système valide et redirige vers le tableau de
+bord correspondant au rôle.
+Table 2.1– Description du cas d’utilisation : S’authentifier
+Cas d’utilisation Acheter une formation (Devenir Étudiant)
+Objectif Permettre à un visiteur ou étudiant d’acheter une offre
+de formation (ex : 20h) et d’initialiser son dossier d’ins-
+cription.
+Acteurs princi-
+pauxVisiteur / Étudiant
+Préconditions L’utilisateur a sélectionné une auto-école.
+Postconditions
+— Une Inscription est créée avec un solde d’heures
+(ex : 20h).
+— Une facture est générée et payée.
+— L’utilisateur acquiert le rôle "Étudiant" s’il ne
+l’avait pas.
+Scénario nomi-
+nal 1. L’utilisateur sélectionne une offre de formation.
+2. Il procède au paiement via Mobile Money.
+3. L’auto-école valide le paiement.
+4. Le système crédite le compte de l’élève du volume
+horaire correspondant.
+Table 2.2– Description du cas d’utilisation : Acheter unr formation
+Page 18 sur 55 Drissman
+Chapitre 2. MÉTHODOLOGIE ET ANALYSE
+Cas d’utilisation Planifier une Séance
+Objectif Permettre à un étudiant de poser une heure de conduite
+en utilisant son crédit d’heures.
+Acteurs princi-
+pauxÉtudiant
+Préconditions
+— L’étudiant possède une Inscription active.
+— Le solde d’heures restantes est suffisant.
+Postconditions
+— Une Séance est créée dans le planning.
+— Le solde d’heures de l’inscription est débité.
+Scénario nomi-
+nal 1. L’étudiant consulte son solde d’heures.
+2. Il sélectionne un créneau disponible dans le calen-
+drier de l’école.
+3. Le système vérifie le solde et la disponibilité.
+4. La séance est planifiée (statut "Planifiée").
+Scénario alterna-
+tifSolde insuffisant : Le système invite l’utilisateur à ra-
+cheter un pack.
+Table 2.3– Description du cas d’utilisation : Planifier une Séance
+Cas d’utilisation Gérer le Personnel (Moniteurs)
+Objectif Permettre au Gérant d’administrer son équipe pédago-
+gique.
+Acteurs princi-
+pauxGérant
+Postconditions Un moniteur est ajouté, modifié ou supprimé du sys-
+tème.
+Scénario nomi-
+nal 1. Le Gérant accède à la section RH.
+2. Ilajouteunnouveaumoniteur(Nom,Prénom,Nu-
+méro Licence).
+3. Le système crée le profil Moniteur associé à cette
+auto-école.
+Table 2.4– Description du cas d’utilisation : Gérer le Personnel
+2.3.5 Diagramme de classes métier
+Ce diagramme met en évidence les entités principales du système et leurs relations,
+intégrant la logique de gestion RH et de planning flexible.
+Page 19 sur 55 Drissman
+Chapitre 2. MÉTHODOLOGIE ET ANALYSE
+Les classes principales du système sont :
+—Utilisateur: Classe générique pour tous les acteurs (Étudiant, Gérant, Moni-
+teur).
+—AutoEcole: L’entité organisationnelle qui emploie des moniteurs et propose des
+offres.
+—Moniteur: Représente le personnel enseignant, lié à une auto-école et assigné
+aux séances.
+—OffreFormation: Le "produit" vendu (Pack d’heures).
+—Inscription: Entité pivot (Portefeuille) qui lie un étudiant à une offre et stocke
+le solde d’heures (Achetées vs Consommées).
+—Seance: Représente un créneau de cours planifié, lié à une inscription et poten-
+tiellement assigné à un moniteur.
+—Facture: Liée à l’Inscription (preuve d’achat du pack).
+Page 20 sur 55 Drissman
+Chapitre 3
+CONCEPTION DU SYSTÈME
+La conception du système a été une étape centrale dans le développement du projet
+Drissman. Elle a permis de traduire les besoins fonctionnels et non fonctionnels ex-
+primés précédemment en une architecture logicielle cohérente, structurée et évolutive.
+Cette phase vise à définir l’organisation globale du système, les interactions entre
+ses différents composants ainsi que le principe de fonctionnement de la plateforme,
+depuis l’action de l’utilisateur jusqu’au traitement des données.
+Drissman repose sur une architecture web moderne multi-couches, séparant clai-
+rement la présentation, la logique métier et la gestion des données, afin de garantir
+maintenabilité, sécurité et évolutivité.
+3.1 Architecture globale du système
+3.1.1 Choix d’une architecture Client–Serveur
+Le système Drissman est basé sur une architecture client–serveur classique, dans
+laquelle :
+—Le client (Frontend): assure l’interface visuelle et l’interaction utilisateur via
+le navigateur.
+—Le serveur (Backend): héberge la logique applicative et expose les données
+via une API.
+—La base de données: assure la persistance et l’intégrité des informations.
+Cette séparation des responsabilités facilite la maintenance du code, l’évolution
+indépendante des parties et la montée en charge du système.
+21
+Chapitre 3. CONCEPTION DU SYSTÈME
+Figure 3.1– Diagramme de cas deploiement du système Drissman
+3.1.2 Architecture en couches (Multi-tier)
+L’architecture logicielle suit un modèle en couches strict :
+Couche Présentation (Frontend)
+Développée avecNext.js, elle gère l’interface utilisateur (UI) et l’expérience utilisa-
+teur (UX). Elle communique avec le serveur uniquement via des requêtes asynchrones
+(HTTP/HTTPS).
+Couche Logique Métier (Backend)
+Implémentée enJava avec Spring Boot, elle constitue le "cerveau" de l’applica-
+tion. Elle contient :
+— Les règles de gestion (vérification du solde d’heures, validation des créneaux de
+séances).
+— La gestion des processus (achat de packs, workflow de planification, affectation
+des moniteurs).
+— Les contrôles de sécurité (authentification JWT, gestion des rôles RBAC).
+Couche d’accès aux données (Persistence)
+Assurée parPostgreSQL, elle permet le stockage relationnel structuré. Cette
+couche est isolée du reste de l’application grâce à l’utilisation d’un ORM (Spring Data
+JPA) intégré à Spring Boot.
+3.2 Conception détaillée des composants
+3.2.1 Conception du Frontend (Next.js)
+Organisation modulaire
+Le frontend constitue le point d’entrée pour les différents acteurs (élèves, gérants,
+moniteurs). L’architecture du code est structurée pour favoriser la réutilisabilité :
+Page 22 sur 55 Drissman
+Chapitre 3. CONCEPTION DU SYSTÈME
+—Pages:Correspondantauxroutesdel’application(Accueil,Recherche,Planning,
+Dashboard RH).
+—Components: Éléments d’interface réutilisables (Cartes d’offres, Calendrier de
+planification, Tableaux de bord).
+—Services: Modules dédiés aux appels API (Axios/Fetch) pour découpler la vue
+de la logique réseau.
+Le choix duServer Side Rendering(SSR) offert par Next.js garantit ici un référence-
+ment optimal (SEO), crucial pour une marketplace.
+3.2.2 Conception du Backend (Spring Boot)
+Architecture interne en couches
+Le backend respecte le pattern MVC (utilisé ici en mode API REST) et l’injection
+de dépendances :
+—Controllers(APILayer):ExposentlesendpointsREST(ex:POST /api/inscriptions,
+GET /api/seances). Ils reçoivent les requêtes HTTP et valident les données en-
+trantes.
+—Services (Business Layer): Contiennent toute la logique métier complexe.
+Par exemple, le service de planification vérifie que l’étudiant dispose d’un crédit
+d’heures suffisant dans son inscription avant de valider une séance.
+—Repositories (Data Access Layer): Interfaces étendantJpaRepositorypour
+dialoguer avec la base de données sans écrire de SQL brut.
+—DTOs (Data Transfer Objects): Objets utilisés pour transférer les données
+entre le client et le serveur sans exposer directement les entités de la base de
+données.
+3.2.3 Conception de la base de données (PostgreSQL)
+Modélisation des données
+Le schéma relationnel est conçu pour garantir l’intégrité des transactions, notam-
+ment pour la gestion des crédits d’heures. Les principales entités identifiées sont :
+—Utilisateur: Hérite d’un système de rôles pour distinguer Élèves, Gérants, Mo-
+niteurs et Admins.
+—Auto-école: Contient les informations descriptives et la localisation.
+—Inscription (Enrollment): Entité pivot qui lie un élève à une offre. Elle stocke
+le solde d’heures achetées et consommées.
+—Séance (Session): Représente un créneau de cours planifié, lié à une inscription
+et assigné à un moniteur.
+—Paiement: Trace les transactions financières liées à l’achat des packs.
+3.2.4 Intégration de la Géolocalisation
+La dimension spatiale est gérée de bout en bout :
+Page 23 sur 55 Drissman
+Chapitre 3. CONCEPTION DU SYSTÈME
+1.Frontend (Leaflet): Affichage de cartes interactives et récupération de la po-
+sition GPS de l’utilisateur.
+2.Backend&BDD:Stockagedescoordonnées(Latitude/Longitude)pourchaque
+auto-école.
+3.Algorithme de proximité: Le système est capable de filtrer les résultats pour
+n’afficher que les auto-écoles dans un rayon défini autour de l’élève.
+Formalisation Algorithmique : Formule de HaversineAfin de calculer avec
+précision la distance orthodromique (à vol d’oiseau) entre la position de l’élève et celle
+d’une auto-école, nous utilisons la formule de Haversine. Cette approche mathématique
+permet de déterminer la distance entre deux points d’une sphère à partir de leurs
+longitudes et latitudes :
+d= 2R·arcsin s
+sin2ϕ2−ϕ 1
+2
++ cos(ϕ 1) cos(ϕ 2) sin2λ2−λ 1
+2!
+(3.1)
+Où :
+—dest la distance entre les deux points (en km).
+—Rest le rayon moyen de la Terre (environ 6 371 km).
+—ϕ 1etϕ 2sont les latitudes des deux points (en radians).
+—λ 1etλ 2sont les longitudes des deux points (en radians).
+Cette formule est implémentée dans la coucheServicedu backend (ou directement
+via les fonctions spatiales de PostgreSQL/PostGIS) pour trier les résultats par proxi-
+mité lors d’une recherche.
+3.3 Sécurité et Flux de données
+3.3.1 Principe de fonctionnement (Workflow)
+Le processus se décompose désormais en deux temps forts :
+1.L’Achat (Inscription): L’utilisateur achète un pack. Le backend vérifie le
+paiement, crée une Inscription et crédite le solde d’heures.
+2.La Planification (Séance): L’utilisateur consomme son crédit. Le backend
+vérifie la disponibilité du créneau et le solde restant, puis crée la Séance.
+3.3.2 Sécurité et Authentification
+La sécurité est assurée à plusieurs niveaux :
+—Authentification: Utilisation deJSON Web Tokens (JWT)pour sécuriser les
+échanges sans état (stateless).
+—Mots de passe: Hachage via BCrypt avant stockage en base.
+—CORS: Configuration stricte pour n’autoriser que le domaine du frontend à
+interroger l’API.
+Page 24 sur 55 Drissman
+Chapitre 3. CONCEPTION DU SYSTÈME
+3.4 Diagrammes de conception
+La conception détaillée permet d’illustrer la dynamique du système Drissman et la
+manière dont les différents composants interagissent.
+3.4.1 Diagrammes de séquences techniques
+Ces diagrammes mettent en évidence les appels entre les différentes couches logi-
+cielles du système.
+Diagramme de séquence technique de l’authentification
+Figure 3.2– Diagramme de séquence technique de l’authentification
+Diagramme de séquence technique : Achat d’une formation
+Ce diagramme illustre le flux de l’achat d’une offre de formation (création de l’ins-
+cription) avant réservation effective d’un créneau horaire (création de la séance).
+Page 25 sur 55 Drissman
+Chapitre 3. CONCEPTION DU SYSTÈME
+Figure 3.3– Diagramme de séquence technique : Achat d’une formation
+Diagramme de séquence technique : Planification d’une session
+Ce diagramme illustre le flux de la réservation effective d’un créneau horaire (créa-
+tion de la séance) après son achat préalable.
+Page 26 sur 55 Drissman
+Chapitre 3. CONCEPTION DU SYSTÈME
+Figure 3.4– Diagramme de séquence technique : Planification d’une session
+Diagramme de séquence technique : Consulter progression
+Cediagrammeillustrelefluxdelaconsultationdelaprogressionpouruneformation
+donnée.
+Page 27 sur 55 Drissman
+Chapitre 3. CONCEPTION DU SYSTÈME
+Figure 3.5– Diagramme de séquence technique : Consulter sa progression
+3.4.2 Diagramme d’état-transition
+Diagramme d’état-transition d’achat d’une offre
+Le diagramme d’état-transition ci-dessous détaille les étapes d’achat d’une offre .
+Figure 3.6– Diagramme d’état-transition du paiement d’une formation
+Diagramme d’état-transition d’une séance de cours
+Le diagramme d’état-transition ci-dessous détaille le cycle de vie d’uneSéancede
+cours.
+Page 28 sur 55 Drissman
+Chapitre 3. CONCEPTION DU SYSTÈME
+Figure 3.7– Diagramme d’état-transition du séance de cours
+Page 29 sur 55 Drissman
+Chapitre 4
+IMPLÉMENTATIONETCHOIXTECH-
+NOLOGIQUES
+Laphased’implémentationconstituel’aboutissementconcretduprocessusdeconcep-
+tionduprojetDrissman.Elleconsisteàtransformerlesmodèlesthéoriques,l’architec-
+ture définie et les exigences fonctionnelles en une application logicielle opérationnelle.
+Cette étape repose sur des choix technologiques stratégiques, visant à garantir la
+performance, la sécurité, la maintenabilité et l’évolutivité du système. Le projet Driss-
+man s’appuie sur une pile technologique (stack) moderne et robuste, largement adop-
+tée dans l’industrie :Next.jspour le frontend,Java Spring Bootpour le backend,
+PostgreSQLpour la persistance des données, etLeafletpour les fonctionnalités de
+géolocalisation.
+4.1 Choix technologiques globaux et philosophie
+Le choix de cette stack repose sur plusieurs critères essentiels :
+—Adéquation fonctionnelle: Capacité à gérer des fonctionnalités complexes
+comme la réservation temps réel et la cartographie.
+—Robustesse et maturité: Utilisation de frameworks éprouvés (Java/Spring)
+pour la logique métier critique.
+—Architecture moderne: Séparation stricte entre le client (Frontend) et le ser-
+veur (Backend) via une architecture API RESTful, facilitant l’évolution future
+vers d’autres plateformes (ex : application mobile native).
+4.2 Implémentation du frontend (Next.js)
+4.2.1 Rôle et justification
+Le frontend est responsable de l’interaction directe avec les utilisateurs (élèves et
+gérants). Il assure l’affichage dynamique, la navigation et la validation des saisies.
+Le frameworkNext.js(basé sur React) a été retenu car il permet le rendu côté
+serveur (Server-Side Rendering- SSR). Pour Drissman, c’est crucial : cela améliore le
+référencement naturel (SEO) des pages des auto-écoles sur les moteurs de recherche
+30
+Chapitre 4. IMPLÉMENTATION ET CHOIX TECHNOLOGIQUES
+et accélère le chargement initial de la plateforme, offrant une meilleure expérience
+utilisateur.
+4.2.2 Organisation technique du code
+L’implémentation du frontend suit une structure modulaire pour garantir la main-
+tenabilité :
+—Pages (Routing): Structure basée sur le système de fichiers de Next.js, définis-
+santlesroutesprincipales(parexemple/recherche,/reservation,/dashboard-ecole).
+—Composants UI réutilisables: Développement d’une bibliothèque de com-
+posants spécifiques au métier de Drissman, tels que des cartes de présentation
+d’auto-écoles pour les résultats de recherche ou des sélecteurs visuels pour les
+créneaux horaires.
+—Services API: Centralisation des appels HTTP (utilisant une bibliothèque
+comme Axios) vers le backend Spring Boot, pour découpler la vue de la logique
+réseau.
+—Gestion d’état: Utilisation d’outils (comme Context API ou Redux) pour gérer
+lesdonnéestransversalestellesquelasessionutilisateur(tokend’authentification)
+ou le panier de réservation en cours.
+—Styling: Utilisation d’un framework CSS moderne (ex : Tailwind CSS ou Mo-
+dules CSS) pour garantir une interface responsive et cohérente sur tous les appa-
+reils.
+4.3 Implémentation du backend (Spring Boot)
+4.3.1 Rôle et justification
+Le backend constitue le "cerveau" du système Drissman. Il traite les requêtes, ap-
+plique les règles métiers complexes, sécurise les accès et gère la persistance des données.
+Le frameworkJava Spring Boota été choisi pour sa robustesse inégalée dans le
+monde de l’entreprise. Son écosystème riche (intégrant Spring Security et Spring Data)
+permet d’implémenter rapidement des fonctionnalités critiques de manière sécurisée et
+standardisée, indispensables pour gérer des transactions et des données personnelles.
+4.3.2 Architecture interne en couches
+L’implémentation respecte une architecture N-tiers stricte :
+—Contrôleurs(REST):Exposentlesendpointsdel’API(ex:POST /api/reservations).
+Ils reçoivent les requêtes HTTP et valident les données entrantes.
+—Services (Logique Métier): Cœur de l’application contenant les règles de
+gestion. Par exemple, le service de réservation vérifie qu’un créneau est libre et
+que le moniteur est disponible avant de valider une transaction.
+—Repositories (Accès Données): Interfaces utilisantSpring Data JPApour
+abstraire les requêtes SQL et interagir avec la base de données via des objets
+Java.
+Page 31 sur 55 Drissman
+Chapitre 4. IMPLÉMENTATION ET CHOIX TECHNOLOGIQUES
+—DTOs (Data Transfer Objects): Objets utilisés pour transporter les données
+entre le client et le serveur, permettant de filtrer les informations sensibles qui ne
+doivent pas être exposées (comme les hashs de mots de passe).
+4.4 Implémentationdelabasededonnées(PostgreSQL)
+La base de donnéesPostgreSQLa été choisie pour sa fiabilité éprouvée et sa
+stricte conformité aux standards SQL. Elle est particulièrement adaptée à Drissman où
+les données sont fortement relationnelles, nécessitant des liens complexes entre Élèves,
+Auto-écoles, Réservations et Paiements.
+L’interactionentrelecodeJavaetlabasededonnéesestassuréeparl’ORM(Object-
+Relational Mapping)Hibernate, intégré nativement via Spring Data JPA.
+Concernant la localisation des auto-écoles, celle-ci est gérée en base de données pour
+permettre des recherches par proximité. [AJOUTER ICI : Soit "via des colonnes de pré-
+cision double stockant la latitude et la longitude", Soit "via l’utilisation de l’extension
+spatiale PostGIS pour des requêtes géographiques performantes"].
+4.5 Implémentation de la géolocalisation
+La géolocalisation est au cœur de l’expérience utilisateur Drissman. Son implémen-
+tation combine le frontend et le backend :
+1.Côté Client (Frontend): La bibliothèqueLeafletest utilisée pour afficher des
+cartes interactives. Elle permet de positionner des marqueurs personnalisés pour
+chaque auto-école et de gérer les interactions utilisateur (zoom, clic pour détails).
+2.Flux de données: Lors d’une recherche géolocalisée, le frontend envoie la po-
+sition ou la zone d’intérêt au backend. Le service Spring Boot interroge Post-
+greSQL pour obtenir les établissements correspondants, et renvoie une liste au
+format JSON que Leaflet utilise pour peupler la carte dynamiquement.
+4.6 Communication et Sécurité
+La communication entre les composants repose sur une API RESTful échangeant
+des données structurées au format JSON, le tout sécurisé via le protocole HTTPS.
+L’implémentation intègre des pratiques de sécurité rigoureuses :
+—AuthentificationStateless:UtilisationdeJWT(JSONWebTokens)gérés
+par Spring Security. Chaque requête du frontend vers des routes protégées doit
+contenir un token valide pour être traitée.
+—Protection des mots de passe: Utilisation de l’algorithme robusteBCrypt
+pour le hachage et le salage des mots de passe avant leur stockage en base de
+données.
+—Validation des données: Mise en place d’une double validation des formu-
+laires : une validation côté client (React) pour l’expérience utilisateur, et une
+validation stricte côté serveur (Spring Boot via les annotations@Valid) pour
+prévenir les injections et garantir l’intégrité des données.
+Page 32 sur 55 Drissman
+Chapitre 4. IMPLÉMENTATION ET CHOIX TECHNOLOGIQUES
+4.7 Conclusion du chapitre
+L’implémentation de Drissman repose sur des choix technologiques cohérents et
+adaptés aux objectifs d’une marketplace moderne. L’utilisation combinée de Next.js
+pour la réactivité de l’interface, Spring Boot pour la robustesse de la logique mé-
+tier, et PostgreSQL pour la fiabilité des données permet de concevoir une plateforme
+performante, sécurisée et évolutive, répondant aux exigences d’un projet d’ingénierie
+professionnel.
+Page 33 sur 55 Drissman
+Chapitre 5
+DIFFICULTÉSRENCONTRÉESETPERS-
+PECTIVES
+Le développement de la plateforme Drissman a confronté l’équipe aux défis inhé-
+rents à la conception d’un système d’information complexe. La transition des modèles
+théoriques vers une implémentation "Full Stack" fonctionnelle a mis en évidence des
+obstacles techniques, fonctionnels et méthodologiques. L’analyse objective de ces dif-
+ficultés est indispensable pour cerner les limites actuelles du prototype et définir des
+axes d’amélioration pertinents en vue de sa professionnalisation.
+5.1 Analyse des difficultés rencontrées
+Le développement de la plateforme Drissman a confronté l’équipe aux défis inhé-
+rents à la conception d’un système d’information complexe. La transition des modèles
+théoriques vers une implémentation "Full Stack" fonctionnelle a mis en évidence des
+obstacles techniques, fonctionnels et méthodologiques. L’analyse objective de ces dif-
+ficultés est indispensable pour cerner les limites actuelles du prototype et définir des
+axes d’amélioration pertinents en vue de sa professionnalisation.
+5.1.1 Complexité de la formalisation des besoins multi-acteurs
+Ladéfinitiond’unpérimètrefonctionnelstablepourunemarketplaceimpliquantdes
+acteurs aux intérêts divergents (élèves, auto-écoles, administrateurs) s’est avérée com-
+plexe. Dans un cadre académique, l’absence d’utilisateurs finaux réels a nécessité une
+modélisation basée sur des hypothèses, rendant délicate la priorisation des fonctionna-
+lités critiques versus accessoires. Cette incertitude a parfois conduit à des ajustements
+tardifs du cahier des charges, impactant le cycle de développement.
+5.1.2 Défisdel’intégrationFullStacketdescontratsd’interface
+L’architecture distribuée, coordonnant un frontend Next.js réactif et un backend
+SpringBootrobuste,aimposéunerigueuraccruedanslacommunicationclient-serveur.
+Les principaux points de friction techniques ont concerné la définition de contrats
+d’interfaceAPIRESTcohérents,lastricteconcordancedesstructuresdedonnéesJSON
+échangées, et la synchronisation de l’état du frontend avec la persistance backend. Ces
+34
+Chapitre 5. DIFFICULTÉS RENCONTRÉES ET PERSPECTIVES
+écueils ont souligné la nécessité critique d’une documentation API exhaustive et d’une
+validation rigoureuse des données aux deux extrémités.
+5.1.3 Gestion avancée de l’authentification et des autorisations
+(RBAC)
+L’implémentationd’uncontrôled’accèsbasésurlesrôles(Role-BasedAccessControl
+- RBAC) pour des profils aux privilèges distincts a constitué un point critique. Les en-
+jeux ont porté sur la définition granulaire des droits, le verrouillage systématique des
+endpoints sensibles du backend via Spring Security, et la gestion sécurisée de l’état de
+connexion "stateless" (via JWT) côté client. L’équilibre entre fluidité d’utilisation et
+impératifs de sécurité a nécessité des arbitrages techniques complexes.
+5.1.4 Modélisation de l’intégrité transactionnelle
+Bien que simulée dans ce prototype, la gestion des paiements a exigé une modéli-
+sation rigoureuse pour garantir la cohérence entre les entités de réservation et les flux
+financiers associés. La difficulté majeure résidait dans la gestion des états transitoires
+(en attente, validé, échoué) et la prévention des incohérences de données (ex : une
+réservation confirmée sans paiement validé).
+5.1.5 Contraintes techniques de la géolocalisation
+L’intégration de la bibliothèque Leaflet a soulevé des défis liés à la correspondance
+fiable entre les données géographiques stockées en base (PostgreSQL) et leur repré-
+sentation visuelle. La gestion dynamique des marqueurs et l’optimisation des perfor-
+mances d’affichage en cas de forte densité d’auto-écoles ont nécessité des ajustements
+spécifiques pour préserver la réactivité du frontend.
+5.1.6 Contraintes méthodologiques et temporelles
+Les contraintes temporelles strictes du projet ont imposé des arbitrages constants
+entre le développement logiciel, la rédaction de la documentation technique et le rap-
+port académique. Représentative de la réalité industrielle, cette contrainte a nécessité
+de limiter le niveau de finition (polishing) ou l’optimisation avancée de certaines fonc-
+tionnalités non critiques au profit du respect des délais.
+5.1.7 Complexité de la gestion des Crédits d’Heures
+Lepassaged’unmodèlederéservationsimpleàunmodèlede"Portefeuilled’heures"
+(Inscription) a complexifié la logique métier. Il a fallu implémenter des verrous transac-
+tionnels pour s’assurer qu’un étudiant ne puisse pas planifier plus d’heures qu’il n’en
+a achetées, tout en gérant les annulations qui doivent "rembourser" le crédit d’heures
+sans rembourser l’argent.
+Page 35 sur 55 Drissman
+Chapitre 5. DIFFICULTÉS RENCONTRÉES ET PERSPECTIVES
+5.1.8 Gestion du Planning Multi-Acteurs
+Lacoordinationentrel’étudiant(quidemandeuncréneau),legérant(quisupervise)
+et le moniteur (qui doit être disponible) a nécessité des algorithmes de vérification de
+disponibilité robustes pour éviter les conflits d’agenda.
+5.2 Perspectives d’évolution et valorisation
+Le prototype actuel de Drissman constitue un socle architectural sain. Pour envi-
+sager une transition vers un produit en condition opérationnelle, plusieurs axes d’évo-
+lution sont identifiés, regroupés ici par domaine :
+5.2.1 Enrichissement fonctionnel et expérience utilisateur
+À moyen terme, la plateforme pourrait intégrer des fonctionnalités visant à fluidifier
+les interactions :
+— Mise en place d’une messagerie interne sécurisée entre élèves et auto-écoles.
+— Système de notifications transactionnelles (email/push) pour les rappels de ré-
+servation.
+— Développementd’uneapplicationmobilenative(iOS/Android)exploitantlesAPI
+REST existantes pour les usages nomades.
+5.2.2 Durcissement technique et scalabilité
+Pour répondre aux exigences d’un environnement de production, l’accent devra être
+mis sur la robustesse :
+— Renforcement de la sécurité via l’authentification à double facteur (2FA) et des
+audits de code.
+— Optimisation des performances (mise en cache Redis, optimisation des requêtes
+SQL) pour supporter la montée en charge.
+Conclusion
+Page 36 sur 55 Drissman
+CONCLUSION GÉNÉRALE
+Ce projet avait pour ambition de répondre à une problématique sociétale et écono-
+mique concrète : la modernisation de l’accès à la formation à la conduite au Cameroun.
+Face au manque de visibilité des auto-écoles et aux difficultés rencontrées par les candi-
+dats,l’objectifétaitdeconcevoirunesolutionnumériquecentraliséecapabledefluidifier
+la mise en relation entre ces acteurs.
+La réalisation de la plateforme « Drissman » a permis de matérialiser cette vision à
+traversunemarketplacewebfonctionnelle.Ensuivantladémarched’ingénierielogicielle
+classique, allant de l’analyse des besoins métier jusqu’à l’implémentation technique,
+nous avons conçu un système capable d’intégrer des fonctionnalités complexes telles
+que la recherche géolocalisée, la gestion de créneaux de réservation en temps réel et la
+simulation de transactions financières.
+Le défi majeur de ce projet résidait dans la maîtrise d’une architecture Full Stack
+moderne et distribuée. Les choix technologiques opérés—l’alliance de la robustesse de
+l’écosystème Java Spring Boot pour le backend métier, et la réactivité du framework
+Next.js pour l’interface utilisateur—se sont avérés pertinents pour répondre aux exi-
+gences de performance et d’expérience utilisateur. La phase de conception détaillée,
+formalisée par des modèles UML (notamment les diagrammes de classes, de séquences
+techniques et d’états-transitions), a été déterminante pour structurer la logique appli-
+cative et anticiper les interactions complexes entre les composants.
+Ce parcours de développement ne s’est toutefois pas fait sans difficultés. Comme
+nousl’avonssouligné,lagestiondelasécurité(authentificationetautorisationsRBAC),
+la modélisation de l’intégrité transactionnelle des réservations et l’intégration fine des
+données cartographiques ont constitué des défis techniques importants. Ces obstacles,
+inhérents à tout projet informatique d’envergure, ont été riches d’enseignements sur les
+réalités du développement professionnel.
+En l’état actuel, nous pensons que Drissman constitue un prototype abouti et un
+socle architectural solide. Il démontre la faisabilité technique du concept. Les pers-
+pectives d’évolution sont nombreuses pour transformer ce socle en un produit viable
+commercialement : l’intégration de passerelles de paiement mobile réelles, le dévelop-
+pement d’une application mobile native pour les usages nomades, ou encore l’ajout de
+fonctionnalités communautaires (avis vérifiés, messagerie) sont autant d’étapes futures
+identifiées.
+Au-delàdel’aspecttechnique,ceprojetnousapermisdeconsoliderdescompétences
+transversales en gestion de projet, en analyse systémique et en résolution de problèmes
+complexes, nous préparant ainsi efficacement aux défis de l’ingénierie informatique.
+37
+Références Bibliographiques
+Webographie du Projet
+— Projet Drissman. Version 1 de la solution de gestion d’auto-école. Accessible à
+l’adresse :https://drissman.vercel.app/(Consulté en février 2026).
+Ouvrages et Articles Académiques
+— Roques, Pascal.UML 2.5 par la pratique : Études de cas et exercices corrigés. 8e
+édition. Éditions Eyrolles, 2018.
+— Walls, Craig.Spring Boot in Action. Manning Publications, 2016.
+— Sommerville, Ian.Software Engineering. 10th Edition. Pearson, 2015.
+— Fielding, Roy T.Architectural Styles and the Design of Network-based Software
+Architectures. Doctoral dissertation, University of California, Irvine, 2000.
+Documentations Techniques Officielles
+— Spring.io. Spring Boot Reference Documentation (v3.x). Disponible sur :https:
+//docs.spring.io/spring-boot/docs/current/reference/html/
+— Vercel. Next.js Documentation - Server Side Rendering (SSR) & Routing. Dispo-
+nible sur :https://nextjs.org/docs
+— PostgreSQL Global Development Group. PostgreSQL 16.0 Documentation. Dis-
+ponible sur :https://www.postgresql.org/docs/16/
+— Leaflet. Leaflet - an open-source JavaScript library for mobile-friendly interactive
+maps. Disponible sur :https://leafletjs.com/
+— Docker. Docker Documentation - Containerize an Application. Disponible sur :
+https://docs.docker.com/
+Normes et Standards de Sécurité
+— IETF. RFC 7519 : JSON Web Token (JWT). Mai 2015. Disponible sur :https:
+//tools.ietf.org/html/rfc7519
+— OWASP (Open Web Application Security Project). OWASP Top Ten Web Ap-
+plication Security Risks.
+38
+Annexe A
+GUIDE DE DÉPLOIEMENT
+A.1 Vue d’ensemble
+Ce guide détaille les différentes méthodes de déploiement de la plateformeDriss-
+man,uneapplicationwebmodernepourauto-écolesavecarchitecturefull-stack(Next.js
++ Spring Boot).
+Déploiement actuel:https://drissman0.vercel.app/
+A.2 Prérequis
+A.2.1 Pour Développement Local
+—Node.js: Version 20.x ou supérieure
+—Java: JDK 21
+—Maven: Version 3.8+
+—PostgreSQL: Version 16
+—Redis: Version 7 (optionnel pour développement)
+—Git: Pour cloner le repository
+A.2.2 Pour Déploiement Docker
+—Docker: Version 24.x ou supérieure
+—Docker Compose: Version 2.x ou supérieure
+A.2.3 Pour Déploiement Cloud
+—Compte Vercel: Pour le frontend
+—Compte Railway/Render: Pour le backend (optionnel)
+—Compte GitHub: Pour le versioning
+39
+Annexe A. GUIDE DE DÉPLOIEMENT
+A.3 Architecture du Projet
+Le projet est organisé en deux parties principales :
+—frontend/: Application Next.js 16 avec React 19
+—backend/: API Spring Boot 3 avec programmation réactive
+—docker-compose.deployment.yml: Orchestration production
+A.4 Déploiement Local (Développement)
+A.4.1 Étape 1 : Cloner le Repository
+1git clone https :// github .com/ japh004 / aphelion - granule .git
+2cd aphelion - granule
+A.4.2 Étape 2 : Configuration de la Base de Données
+Créer la Base de Données PostgreSQL
+1# Se connecter PostgreSQL
+2psql -U postgres
+3
+4# C r e r la base de d o n n e s
+5CREATE DATABASE drissman ;
+6CREATE USER drissman WITH PASSWORD ’ drissman_secret ’;
+7GRANT ALL PRIVILEGES ON DATABASE drissman TO drissman ;
+8\q
+A.4.3 Étape 3 : Démarrer le Backend
+1cd backend
+2# Compiler le projet
+3mvn clean install
+4# Lancer l’ application
+5mvn spring - boot :run
+Le backend sera accessible surhttp://localhost:8080
+A.4.4 Étape 4 : Démarrer le Frontend
+1cd frontend
+2# Installer les d p e n d a n c e s
+3npm install
+4# Lancer en mode d v e l o p p e m e n t
+5npm run dev
+Le frontend sera accessible surhttp://localhost:3000
+Page 40 sur 55 Drissman
+Annexe A. GUIDE DE DÉPLOIEMENT
+A.5 Déploiement Docker (Production)
+A.5.1 Vérification de Docker
+1# V r i f i e r l’ installation
+2docker -- version
+3docker - compose -- version
+A.5.2 Configuration
+Le fichierdocker-compose.deployment.ymlorchestre 4 conteneurs :
+—Frontend: Next.js (port 3000)
+—Backend: Spring Boot (port 8080)
+—PostgreSQL: Base de données (port 5432, interne)
+—Redis: Cache (port 6379, interne)
+A.5.3 Build et Démarrage
+1# la racine du projet
+2docker - compose -f docker - compose . deployment . yml up --build -d
+A.5.4 Vérification des Conteneurs
+1# Voir les conteneurs actifs
+2docker - compose -f docker - compose . deployment . yml ps
+3# Voir les logs
+4docker - compose -f docker - compose . deployment . yml logs -f
+A.5.5 Commandes Utiles
+Commande Description
+docker-compose down Arrêter les services
+docker-compose down -v Arrêter et supprimer les volumes
+docker-compose restart
+backendRedémarrer le backend
+docker stats Voir les ressources utilisées
+Table A.1– Commandes Docker utiles
+A.6 Déploiement Cloud (Vercel + Railway)
+A.6.1 Frontend sur Vercel
+Le frontend est actuellement déployé sur Vercel :https://drissman0.vercel.
+app/
+Page 41 sur 55 Drissman
+Annexe A. GUIDE DE DÉPLOIEMENT
+Étapes de Déploiement
+1.Préparer le Repository GitHub
+1git init
+2git add .
+3git commit -m " Initial commit "
+4git remote add origin https :// github . com/ USERNAME / aphelion -
+granule .git
+5git push -u origin main
+2.Connexion à Vercel
+— Aller surhttps://vercel.com
+— Se connecter avec GitHub
+3.Configuration du Projet
+— Cliquer sur "Add New..."→"Project"
+— Sélectionner le repository
+—Root Directory: Sélectionnerfrontend(IMPORTANT)
+— Framework Preset : Next.js (détecté automatiquement)
+4.Variables d’Environnement
+1NEXT_PUBLIC_API_URL = https :// votre - backend . railway .app/api
+5.Déployer
+— Cliquer sur "Deploy"
+— Attendre la fin du build ( 2-3 minutes)
+A.6.2 Backend sur Railway (Optionnel)
+1. Aller surhttps://railway.app
+2. Créer un nouveau projet
+3. Sélectionner "Deploy from GitHub repo"
+4. Configurer :
+— Root Directory :backend
+— Build Command :mvn clean package -DskipTests
+— StartCommand:java -jar target/drissman-backend-0.0.1-SNAPSHOT.jar
+5. Ajouter PostgreSQL via Railway
+6. Configurer les variables d’environnement
+A.7 Configuration des Variables d’Environnement
+A.7.1 Frontend (Next.js)
+Créer un fichier.env.localdansfrontend/:
+1# URL de l’API Backend
+2NEXT_PUBLIC_API_URL = http :// localhost :8080/ api
+3# En production ( Vercel )
+4# NEXT_PUBLIC_API_URL = https :// votre - backend . railway .app/api
+Page 42 sur 55 Drissman
+Annexe A. GUIDE DE DÉPLOIEMENT
+A.7.2 Backend (Spring Boot)
+Variables dansapplication.yml:
+1spring :
+2r2dbc :
+3url: ${ SPRING_R2DBC_URL : r2dbc : postgresql :// localhost :5432/ drissman
+}
+4username : ${ SPRING_R2DBC_USERNAME : drissman }
+5password : ${ SPRING_R2DBC_PASSWORD : drissman_secret }
+6jwt:
+7secret : ${ JWT_SECRET :votre -secret -jwt}
+8expiration : ${ JWT_EXPIRATION :86400000}
+A.8 Troubleshooting
+A.8.1 Problème : Le Frontend ne se connecte pas au Backend
+Symptôme: Erreurs CORS ou "Network Error"
+Solution:
+— Vérifier queNEXT_PUBLIC_API_URLest correctement définie
+— Vérifier que le backend est accessible
+— Vérifier la configuration CORS dans le backend
+A.8.2 Problème : Erreur de connexion PostgreSQL
+Symptôme:Connection refusedouAuthentication failed
+Solution:
+1# V r i f i e r que PostgreSQL est d m a r r
+2sudo systemctl status postgresql
+3# V r i f i e r les credentials
+4psql -U drissman -d drissman -h localhost
+A.8.3 Problème : Build Docker échoue
+Solution:
+1# Nettoyer les images et volumes
+2docker system prune -a
+3docker volume prune
+4# Rebuild
+5docker - compose -f docker - compose . deployment . yml up --build -d
+A.9 Checklist de Déploiement
+A.9.1 Avant le Déploiement
+□Code testé en local
+□Variables d’environnement configurées
+Page 43 sur 55 Drissman
+Annexe A. GUIDE DE DÉPLOIEMENT
+□Base de données migrée (Liquibase)
+□Build frontend réussi (npm run build)
+□Build backend réussi (mvn clean package)
+A.9.2 Déploiement Docker
+□Docker et Docker Compose installés
+□Fichierdocker-compose.deployment.ymlconfiguré
+□Ports 3000 et 8080 disponibles
+□Volumes créés pour persistance
+A.9.3 Déploiement Cloud
+□Repository GitHub à jour
+□Vercel configuré avec Root Directoryfrontend
+□Backend déployé (Railway/Render)
+□Variables d’environnement définies
+□URL backend mise à jour dans frontend
+chapterGUIDE D’UTILISATION
+A.10 Vue d’ensemble
+Drissmanest une plateforme moderne de gestion d’auto-écoles qui permet aux
+étudiants de trouver, comparer et réserver des cours de conduite en ligne, tout en
+offrant aux administrateurs d’auto-écoles des outils de gestion complets.
+Accès à la plateforme:https://drissman0.vercel.app/
+A.11 Configuration Requise et Accès
+A.11.1 Navigateurs Supportés
+Pour une expérience optimale, nous recommandons l’utilisation d’un navigateur
+récent :
+—Google Chrome: Version 90 ou supérieure (recommandé)
+—Mozilla Firefox: Version 88 ou supérieure
+—Apple Safari: Version 14 ou supérieure
+—Microsoft Edge: Version 90 ou supérieure
+Page 44 sur 55 Drissman
+Annexe A. GUIDE DE DÉPLOIEMENT
+Figure A.1– Page d’accueil interface web
+A.11.2 Compatibilité Mobile
+La plateforme est conçue enresponsive designet s’adapte aux terminaux mobiles :
+—Smartphones: iOS 14+, Android 10+
+—Tablettes: iPad, tablettes Android récentes
+Page 45 sur 55 Drissman
+Annexe A. GUIDE DE DÉPLOIEMENT
+Figure A.2– Page d’accueil sur téléphone
+A.12 Création de Compte
+A.12.1 Pour les Étudiants
+1. Accéder à la page d’accueil et cliquer sur le bouton"S’inscrire"en haut à droite.
+2. Remplir le formulaire d’inscription avec les informations suivantes :
+— Prénom et Nom
+— Adresse email valide
+— Mot de passe sécurisé (minimum 6 caractères)
+— Confirmation du mot de passe
+3. Cliquer sur le bouton"Créer mon compte".
+Page 46 sur 55 Drissman
+Annexe A. GUIDE DE DÉPLOIEMENT
+4. Une fois le compte créé avec succès, la connexion est automatique.
+Figure A.3– Formulaire d’inscription élève
+A.12.2 Pour les Administrateurs d’Auto-École
+La procédure permet d’enregistrer l’établissement et le compte gérant simultané-
+ment.
+Figure A.4– Formulaire d’inscription partenaire (Auto-école)
+A.13 Connexion
+A.13.1 Processus de Connexion
+1. Cliquer sur le bouton"Se connecter"dans la barre de navigation.
+2. Saisir votre adresse email et votre mot de passe.
+Page 47 sur 55 Drissman
+Annexe A. GUIDE DE DÉPLOIEMENT
+3. Cliquer sur le bouton"Se connecter".
+4. Vous serez automatiquement redirigé vers votre tableau de bord personnel.
+Figure A.5– Tableau de bord de l’étudiant
+A.14 Fonctionnalités Étudiant
+A.14.1 Recherche d’Auto-Écoles
+La page d’accueil présente une liste exhaustive des auto-écoles partenaires. Chaque
+fiche d’auto-école affiche :
+— Le nom de l’établissement et sa ville.
+— La note moyenne attribuée par les étudiants (étoiles).
+— Une photo de couverture.
+Figure A.6– Interface de recherche d’une auto-école
+Filtres de Recherche
+Pour affiner votre recherche, utilisez les filtres disponibles dans la barre latérale :
+—Ville: Sélectionner une localité spécifique.
+—Note minimale: Filtrer par note moyenne des utilisateurs.
+Page 48 sur 55 Drissman
+Annexe A. GUIDE DE DÉPLOIEMENT
+—Prix: Définir une fourchette de prix.
+Figure A.7– Filtres de recherche
+A.14.2 Achat d’une formation (Inscription)
+Avant de pouvoir réserver des créneaux, vous devez souscrire à une offre.
+Étape 1 : Sélectionner une Offre
+1. Naviguer vers la page détaillée de l’auto-école.
+2. Consulter la liste des offres (ex : "Pack Permis B - 20h").
+3. Cliquer sur le bouton"Acheter"ou"S’inscrire".
+Figure A.8– Sélection d’une offre de formation
+Étape 2 : Paiement Sécurisé
+La plateforme accepte les méthodes de paiement mobile :
+1. Sélectionner votre opérateur (MTN ou Orange Money).
+2. Saisir le numéro de téléphone et confirmer.
+3. Valider la transaction sur votre mobile via le code PIN.
+4. Une fois validé, votre compte est crédité du nombre d’heures du pack.
+Page 49 sur 55 Drissman
+Annexe A. GUIDE DE DÉPLOIEMENT
+Figure A.9– Interface de paiement
+A.14.3 Planification des Séances (Utilisation du Crédit)
+Une fois le pack acheté, vous pouvez planifier vos heures de conduite.
+Poser une Séance
+1. Aller dans l’onglet"Mon Planning".
+2. Un calendrier interactif affiche les disponibilités de l’école (en vert).
+3. Cliquer sur un créneau horaire.
+4. Confirmer la réservation. Votre solde d’heures est débité automatiquement.
+Figure A.10– Calendrier de planification des séances
+A.14.4 Mes Réservations et Historique
+Accessible via le menu principal sous l’onglet"Mes Réservations".
+Page 50 sur 55 Drissman
+Annexe A. GUIDE DE DÉPLOIEMENT
+Information Description
+Date et heure Le créneau horaire réservé.
+Statut État de la séance :PLANIFIÉE,VALIDÉE,ANNULÉE, ouCOMPLÉTÉE.
+Moniteur Le nom du moniteur assigné (si disponible).
+Table A.2– Détail d’une séance
+Figure A.11– Liste des réservations de l’élève
+A.14.5 Suivi de Progression
+Accessible via l’onglet"Ma Progression". Ce tableau de bord affiche :
+—Solde d’heures: Heures achetées vs Heures consommées.
+—Progression globale: Barre de progression vers l’examen.
+Page 51 sur 55 Drissman
+Annexe A. GUIDE DE DÉPLOIEMENT
+Figure A.12– Tableau de bord de progressionPage 52 sur 55 Drissman
+Annexe A. GUIDE DE DÉPLOIEMENT
+A.15 Fonctionnalités Administrateur (Gérant)
+A.15.1 Tableau de Bord Administrateur
+Dès la connexion, le Gérant accède aux statistiques clés :
+— Chiffre d’affaires mensuel.
+— Nombre d’inscriptions actives.
+— Planning du jour.
+Figure A.13– Tableau de bord administrateur
+A.15.2 Gestion des Offres
+Accessible via"Mes Offres". Permet de créer, modifier ou supprimer des packs de
+formation.
+Figure A.14– Liste des offres de formation
+Page 53 sur 55 Drissman
+Annexe A. GUIDE DE DÉPLOIEMENT
+Figure A.15– Création d’une nouvelle offre
+A.15.3 Gestion des Disponibilités
+Accessiblevia"Disponibilités".C’esticiquevousdéfinissezlesheuresd’ouverture
+globales de l’école (ex : Lundi 8h-18h).
+Figure A.16– Gestion des créneaux d’ouverture
+Figure A.17– Ajout d’un créneau
+Page 54 sur 55 Drissman
+Annexe A. GUIDE DE DÉPLOIEMENT
+A.15.4 Gestion du Personnel (Moniteurs)
+Nouvelle fonctionnalité.Accessible via l’onglet"Moniteurs".
+1. Cliquer sur"Ajouter un Moniteur".
+2. Renseigner : Nom, Prénom, Numéro de Licence, Téléphone.
+3. Le moniteur apparaît ensuite dans la liste du personnel disponible.
+A.15.5 Gestion du Planning et Affectation
+Le Gérant peut voir toutes les séances réservées par les élèves.
+—Affecter un moniteur: Cliquer sur une séance sans moniteur et sélectionner
+un employé disponible.
+—Valider/Annuler: Changer le statut d’une séance en cas d’imprévu.
+A.16 Navigation et Interface Utilisateur
+A.16.1 Menu Principal
+—Auto-Écoles: Recherche et filtres.
+—Mes Réservations(Étudiant) : Historique.
+—Ma Progression(Étudiant) : Suivi.
+—Administration(Gérant) : Outils de gestion (Offres, RH, Planning).
+—Mon Profil: Paramètres du compte.
+A.16.2 Thème Visuel
+L’interface propose deux modes (Clair et Sombre), commutables via l’icône en haut
+à droite.
+A.16.3 Adaptation (Responsive)
+Appareil Affichage
+Desktop Menu latéral fixe, tableaux complets.
+Tablette Menu repliable, grille 2 colonnes.
+Mobile Menu bas (type app), affichage liste vertical.
+Table A.3– Adaptation responsive de l’interface
+Page 55 sur 55 Drissman

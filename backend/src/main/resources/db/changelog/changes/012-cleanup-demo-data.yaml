@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - changeSet:
+      id: 012-cleanup-demo-data
+      author: drissman
+      changes:
+        - delete:
+            tableName: schools
+            where: "id = '22222222-2222-2222-2222-222222222222'"

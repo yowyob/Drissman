@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 028-add-school-id-to-invoices
+      author: drissman
+      changes:
+        - addColumn:
+            tableName: invoices
+            columns:
+              - column:
+                  name: school_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_invoice_school
+                    references: schools(id)
+        - sql:
+            sql: "UPDATE invoices SET school_id = (SELECT school_id FROM enrollments WHERE enrollments.id = COALESCE(invoices.enrollment_id, invoices.booking_id))"

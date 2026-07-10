@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-add-image-url-to-offers
+      author: antigravity
+      changes:
+        - addColumn:
+            tableName: offers
+            columns:
+              - column:
+                  name: image_url
+                  type: varchar(1024)

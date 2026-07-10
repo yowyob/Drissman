@@ -1,0 +1,27 @@
+databaseChangeLog:
+  - changeSet:
+      id: 016-update-school-images-local
+      author: system
+      comment: Update school images with locally generated images
+      changes:
+        - update:
+            tableName: schools
+            columns:
+              - column:
+                  name: image_url
+                  value: /schools/auto-ecole-excellence.png
+            where: name = 'Auto-École Excellence'
+        - update:
+            tableName: schools
+            columns:
+              - column:
+                  name: image_url
+                  value: /schools/conduite-pro-douala.png
+            where: name = 'Conduite Pro Douala'
+        - update:
+            tableName: schools
+            columns:
+              - column:
+                  name: image_url
+                  value: /schools/permis-express.png
+            where: name = 'Permis Express'

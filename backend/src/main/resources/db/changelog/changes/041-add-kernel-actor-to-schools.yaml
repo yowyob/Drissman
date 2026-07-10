@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 041-add-kernel-actor-to-schools
+      author: drissman
+      comment: BusinessActor kernel du propriétaire de l'école (P3).
+      changes:
+        - addColumn:
+            tableName: schools
+            columns:
+              - column:
+                  name: kernel_business_actor_id
+                  type: uuid
+                  constraints:
+                    nullable: true

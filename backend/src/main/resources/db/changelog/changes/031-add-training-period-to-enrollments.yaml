@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 031-add-training-period-to-enrollments
+      author: drissman
+      changes:
+        - addColumn:
+            tableName: enrollments
+            columns:
+              - column:
+                  name: training_period_id
+                  type: UUID
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_enrollments_training_period
+                    references: training_periods(id)

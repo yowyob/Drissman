@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 036-add-module-lesson-to-sessions
+      author: drissman
+      changes:
+        - addColumn:
+            tableName: sessions
+            columns:
+              - column:
+                  name: module_id
+                  type: UUID
+              - column:
+                  name: lesson_id
+                  type: UUID

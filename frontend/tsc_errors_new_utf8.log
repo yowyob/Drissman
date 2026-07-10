@@ -1,0 +1,1 @@
+﻿src/app/(candidat)/enrollments/page.tsx(77,93): error TS2339: Property 'enrollmentDate' does not exist on type 'Enrollment'.

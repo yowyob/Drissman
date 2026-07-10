@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 029-fix-invoice-school-id
+      author: drissman
+      changes:
+        - sql:
+            sql: "UPDATE invoices SET school_id = (SELECT school_id FROM bookings WHERE bookings.id = invoices.booking_id) WHERE school_id IS NULL AND booking_id IS NOT NULL"
+        - sql:
+            sql: "UPDATE invoices SET school_id = (SELECT school_id FROM enrollments WHERE enrollments.id = invoices.enrollment_id) WHERE school_id IS NULL AND enrollment_id IS NOT NULL"

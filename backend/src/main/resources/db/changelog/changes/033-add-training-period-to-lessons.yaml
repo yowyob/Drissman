@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 033-add-training-period-to-lessons
+      author: drissman
+      changes:
+        - addColumn:
+            tableName: lessons
+            columns:
+              - column:
+                  name: training_period_id
+                  type: UUID
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_lessons_training_period
+                    references: training_periods(id)

@@ -1,0 +1,56 @@
+﻿.next/dev/types/validator.ts(42,39): error TS2307: Cannot find module '../../../src/app/(auth)/login/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(51,39): error TS2307: Cannot find module '../../../src/app/(auth)/register/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(60,39): error TS2307: Cannot find module '../../../src/app/(public)/code/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(69,39): error TS2307: Cannot find module '../../../src/app/(public)/contact/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(78,39): error TS2307: Cannot find module '../../../src/app/(public)/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(87,39): error TS2307: Cannot find module '../../../src/app/(public)/partners/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(96,39): error TS2307: Cannot find module '../../../src/app/(public)/school/[id]/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(105,39): error TS2307: Cannot find module '../../../src/app/(public)/search/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(114,39): error TS2307: Cannot find module '../../../src/app/dashboard/bookings/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(123,39): error TS2307: Cannot find module '../../../src/app/dashboard/curriculum/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(132,39): error TS2307: Cannot find module '../../../src/app/dashboard/invoices/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(141,39): error TS2307: Cannot find module '../../../src/app/dashboard/monitor/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(150,39): error TS2307: Cannot find module '../../../src/app/dashboard/monitors/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(159,39): error TS2307: Cannot find module '../../../src/app/dashboard/offers/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(168,39): error TS2307: Cannot find module '../../../src/app/dashboard/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(177,39): error TS2307: Cannot find module '../../../src/app/dashboard/schedule/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(186,39): error TS2307: Cannot find module '../../../src/app/dashboard/school/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(195,39): error TS2307: Cannot find module '../../../src/app/dashboard/settings/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(204,39): error TS2307: Cannot find module '../../../src/app/dashboard/training-periods/[id]/planning/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(213,39): error TS2307: Cannot find module '../../../src/app/dashboard/training-periods/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(228,39): error TS2307: Cannot find module '../../../src/app/(auth)/layout.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(237,39): error TS2307: Cannot find module '../../../src/app/(public)/layout.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(246,39): error TS2307: Cannot find module '../../../src/app/dashboard/layout.js' or its corresponding type declarations.
+.next/types/validator.ts(42,39): error TS2307: Cannot find module '../../src/app/(auth)/login/page.js' or its corresponding type declarations.
+.next/types/validator.ts(51,39): error TS2307: Cannot find module '../../src/app/(auth)/register/page.js' or its corresponding type declarations.
+.next/types/validator.ts(60,39): error TS2307: Cannot find module '../../src/app/(public)/code/page.js' or its corresponding type declarations.
+.next/types/validator.ts(69,39): error TS2307: Cannot find module '../../src/app/(public)/contact/page.js' or its corresponding type declarations.
+.next/types/validator.ts(78,39): error TS2307: Cannot find module '../../src/app/(public)/page.js' or its corresponding type declarations.
+.next/types/validator.ts(87,39): error TS2307: Cannot find module '../../src/app/(public)/partners/page.js' or its corresponding type declarations.
+.next/types/validator.ts(96,39): error TS2307: Cannot find module '../../src/app/(public)/school/[id]/page.js' or its corresponding type declarations.
+.next/types/validator.ts(105,39): error TS2307: Cannot find module '../../src/app/(public)/search/page.js' or its corresponding type declarations.
+.next/types/validator.ts(114,39): error TS2307: Cannot find module '../../src/app/dashboard/availabilities/page.js' or its corresponding type declarations.
+.next/types/validator.ts(123,39): error TS2307: Cannot find module '../../src/app/dashboard/bookings/page.js' or its corresponding type declarations.
+.next/types/validator.ts(132,39): error TS2307: Cannot find module '../../src/app/dashboard/curriculum/page.js' or its corresponding type declarations.
+.next/types/validator.ts(141,39): error TS2307: Cannot find module '../../src/app/dashboard/help/page.js' or its corresponding type declarations.
+.next/types/validator.ts(150,39): error TS2307: Cannot find module '../../src/app/dashboard/invoices/page.js' or its corresponding type declarations.
+.next/types/validator.ts(159,39): error TS2307: Cannot find module '../../src/app/dashboard/monitor/page.js' or its corresponding type declarations.
+.next/types/validator.ts(168,39): error TS2307: Cannot find module '../../src/app/dashboard/monitors/page.js' or its corresponding type declarations.
+.next/types/validator.ts(177,39): error TS2307: Cannot find module '../../src/app/dashboard/offers/page.js' or its corresponding type declarations.
+.next/types/validator.ts(186,39): error TS2307: Cannot find module '../../src/app/dashboard/page.js' or its corresponding type declarations.
+.next/types/validator.ts(195,39): error TS2307: Cannot find module '../../src/app/dashboard/planning/page.js' or its corresponding type declarations.
+.next/types/validator.ts(204,39): error TS2307: Cannot find module '../../src/app/dashboard/rewards/page.js' or its corresponding type declarations.
+.next/types/validator.ts(213,39): error TS2307: Cannot find module '../../src/app/dashboard/school/page.js' or its corresponding type declarations.
+.next/types/validator.ts(222,39): error TS2307: Cannot find module '../../src/app/dashboard/sessions/page.js' or its corresponding type declarations.
+.next/types/validator.ts(231,39): error TS2307: Cannot find module '../../src/app/dashboard/settings/page.js' or its corresponding type declarations.
+.next/types/validator.ts(240,39): error TS2307: Cannot find module '../../src/app/dashboard/theory/page.js' or its corresponding type declarations.
+.next/types/validator.ts(249,39): error TS2307: Cannot find module '../../src/app/dashboard/training-periods/[id]/planning/page.js' or its corresponding type declarations.
+.next/types/validator.ts(258,39): error TS2307: Cannot find module '../../src/app/dashboard/training-periods/page.js' or its corresponding type declarations.
+.next/types/validator.ts(273,39): error TS2307: Cannot find module '../../src/app/(auth)/layout.js' or its corresponding type declarations.
+.next/types/validator.ts(282,39): error TS2307: Cannot find module '../../src/app/(public)/layout.js' or its corresponding type declarations.
+.next/types/validator.ts(291,39): error TS2307: Cannot find module '../../src/app/dashboard/layout.js' or its corresponding type declarations.
+src/components/dashboard/partner-dashboard.tsx(98,40): error TS2345: Argument of type 'string | 0' is not assignable to parameter of type 'number'.
+  Type 'string' is not assignable to type 'number'.
+src/components/dashboard/partner-dashboard.tsx(194,42): error TS2304: Cannot find name 'Settings'.
+src/components/dashboard/quick-add-dialog.tsx(84,55): error TS2367: This comparison appears to be unintentional because the types '"PENDING" | "CANCELLED" | "COMPLETED" | "ACTIVE" | "SUSPENDED"' and '"VALIDATED"' have no overlap.
+src/components/dashboard/quick-add-dialog.tsx(84,83): error TS2367: This comparison appears to be unintentional because the types '"PENDING" | "CANCELLED" | "COMPLETED" | "ACTIVE" | "SUSPENDED"' and '"IN_PROGRESS"' have no overlap.

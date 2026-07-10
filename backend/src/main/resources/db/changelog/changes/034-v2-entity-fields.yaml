@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: 034-v2-entity-fields
+      author: drissman
+      changes:
+        # --- Users table additions ---
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: phone
+                  type: varchar(20)
+              - column:
+                  name: avatar_url
+                  type: varchar(500)
+              - column:
+                  name: is_active
+                  type: boolean
+                  defaultValueBoolean: true
+              - column:
+                  name: updated_at
+                  type: timestamp
+
+        # --- Schools table additions ---
+        - addColumn:
+            tableName: schools
+            columns:
+              - column:
+                  name: region
+                  type: varchar(100)
+              - column:
+                  name: website
+                  type: varchar(500)
+              - column:
+                  name: is_verified
+                  type: boolean
+                  defaultValueBoolean: false
+
+        # --- Monitors table additions ---
+        - addColumn:
+            tableName: monitors
+            columns:
+              - column:
+                  name: email
+                  type: varchar(255)
+              - column:
+                  name: password
+                  type: varchar(255)
+              - column:
+                  name: specialties
+                  type: varchar(255)
+              - column:
+                  name: avatar_url
+                  type: varchar(500)
+              - column:
+                  name: is_active
+                  type: boolean
+                  defaultValueBoolean: true

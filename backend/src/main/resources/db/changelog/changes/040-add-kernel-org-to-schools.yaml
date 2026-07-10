@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 040-add-kernel-org-to-schools
+      author: drissman
+      changes:
+        - addColumn:
+            tableName: schools
+            columns:
+              - column:
+                  name: kernel_organization_id
+                  type: uuid
+                  constraints:
+                    nullable: true

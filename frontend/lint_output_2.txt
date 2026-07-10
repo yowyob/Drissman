@@ -1,0 +1,64 @@
+
+> frontend@0.1.0 lint
+> eslint
+
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\app\(public)\code\page.tsx
+    3:10   warning  'BookOpen' is defined but never used                             @typescript-eslint/no-unused-vars
+    3:20   warning  'CheckCircle' is defined but never used                          @typescript-eslint/no-unused-vars
+    3:33   warning  'Clock' is defined but never used                                @typescript-eslint/no-unused-vars
+    3:40   warning  'Award' is defined but never used                                @typescript-eslint/no-unused-vars
+  144:106  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\app\(public)\page.tsx
+    5:55  warning  'MessageSquare' is defined but never used                        @typescript-eslint/no-unused-vars
+  187:60  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\app\(public)\partners\page.tsx
+   4:10  warning  'Building2' is defined but never used                            @typescript-eslint/no-unused-vars
+  89:84  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\app\(public)\search\page.tsx
+  5:10  warning  'Navbar' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\app\dashboard\bookings\page.tsx
+  18:70  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\booking\booking-modal.tsx
+   9:17  warning  'CreditCard' is defined but never used  @typescript-eslint/no-unused-vars
+  43:28  warning  'method' is defined but never used      @typescript-eslint/no-unused-vars
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\code\code-curriculum.tsx
+  7:24  warning  'Circle' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\code\quiz-demo.tsx
+  5:32  warning  'ArrowRight' is defined but never used  @typescript-eslint/no-unused-vars
+  6:10  warning  'Progress' is defined but never used    @typescript-eslint/no-unused-vars
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\hero\search-box.tsx
+  5:33  warning  'Car' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\partners\pricing-section.tsx
+  2:24  warning  'Zap' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\partners\registration-preview.tsx
+  3:8  warning  'Image' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\school\offers-list.tsx
+  3:17  warning  'Euro' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\school\school-detail-view.tsx
+  5:10  warning  'Navbar' is defined but never used         @typescript-eslint/no-unused-vars
+  8:10  warning  'BookingWidget' is defined but never used  @typescript-eslint/no-unused-vars
+  9:10  warning  'OffersList' is defined but never used     @typescript-eslint/no-unused-vars
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\school\school-gallery.tsx
+  7:12  warning  'selectedImage' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  7:27  warning  'setSelectedImage' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\search\search-filters.tsx
+  15:29  warning  'X' is defined but never used         @typescript-eslint/no-unused-vars
+  16:10  warning  'useState' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 27 problems (4 errors, 23 warnings)
+

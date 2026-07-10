@@ -1,0 +1,117 @@
+
+> frontend@0.1.0 lint
+> eslint
+
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\app\(auth)\login\page.tsx
+  58:26  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\app\(auth)\register\page.tsx
+   87:57   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  115:108  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\app\(public)\code\page.tsx
+    3:10   warning  'BookOpen' is defined but never used                             @typescript-eslint/no-unused-vars
+    3:20   warning  'CheckCircle' is defined but never used                          @typescript-eslint/no-unused-vars
+    3:33   warning  'Clock' is defined but never used                                @typescript-eslint/no-unused-vars
+    3:40   warning  'Award' is defined but never used                                @typescript-eslint/no-unused-vars
+   27:124  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  144:106  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\app\(public)\page.tsx
+    5:55  warning  'MessageSquare' is defined but never used                        @typescript-eslint/no-unused-vars
+  157:58  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  157:70  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  187:60  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\app\(public)\partners\page.tsx
+   4:10  warning  'Building2' is defined but never used                            @typescript-eslint/no-unused-vars
+  20:50  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  89:84  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\app\(public)\search\page.tsx
+  5:10  warning  'Navbar' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\app\dashboard\bookings\page.tsx
+  18:70  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\app\dashboard\page.tsx
+   33:120  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+   33:128  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+   33:147  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  125:63   error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\auth\auth-split-layout.tsx
+  44:29   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  44:31   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  44:126  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  44:132  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  44:166  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\booking\booking-modal.tsx
+    9:17  warning  'CreditCard' is defined but never used                           @typescript-eslint/no-unused-vars
+   43:28  warning  'method' is defined but never used                               @typescript-eslint/no-unused-vars
+  157:26  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\code\code-curriculum.tsx
+  7:24  warning  'Circle' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\code\quiz-demo.tsx
+  5:32  warning  'ArrowRight' is defined but never used  @typescript-eslint/no-unused-vars
+  6:10  warning  'Progress' is defined but never used    @typescript-eslint/no-unused-vars
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\hero\search-box.tsx
+  5:33  warning  'Car' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\layout\footer.tsx
+  18:86  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\partners\pricing-section.tsx
+   2:24  warning  'Zap' is defined but never used                                  @typescript-eslint/no-unused-vars
+  85:32  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\partners\registration-preview.tsx
+   3:8    warning  'Image' is defined but never used                                @typescript-eslint/no-unused-vars
+  66:109  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\school\booking-widget.tsx
+  31:86   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  31:109  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  38:62   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\school\offers-list.tsx
+  3:17  warning  'Euro' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\school\school-detail-view.tsx
+    5:10   warning  'Navbar' is defined but never used                               @typescript-eslint/no-unused-vars
+    8:10   warning  'BookingWidget' is defined but never used                        @typescript-eslint/no-unused-vars
+    9:10   warning  'OffersList' is defined but never used                           @typescript-eslint/no-unused-vars
+  195:102  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  195:125  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\school\school-gallery.tsx
+  8:12  warning  'selectedImage' is assigned a value but never used                                                                                                                                          @typescript-eslint/no-unused-vars
+  8:27  warning  'setSelectedImage' is assigned a value but never used                                                                                                                                       @typescript-eslint/no-unused-vars
+  8:47  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\search\school-card.tsx
+  64:67  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\search\search-filters.tsx
+  15:29  warning  'X' is defined but never used                                    @typescript-eslint/no-unused-vars
+  16:10  warning  'useState' is defined but never used                             @typescript-eslint/no-unused-vars
+  45:63  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\ui\input.tsx
+  5:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\ui\label.tsx
+  3:13  warning  'LabelPrimitive' is defined but never used          @typescript-eslint/no-unused-vars
+  4:20  warning  'VariantProps' is defined but never used            @typescript-eslint/no-unused-vars
+  8:7   warning  'labelVariants' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\DELL\.gemini\antigravity\playground\aphelion-granule\frontend\src\components\ui\modal.tsx
+  6:10  warning  'cn' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 60 problems (33 errors, 27 warnings)
+

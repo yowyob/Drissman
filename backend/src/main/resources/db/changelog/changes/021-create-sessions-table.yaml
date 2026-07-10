@@ -1,0 +1,69 @@
+databaseChangeLog:
+  - changeSet:
+      id: 021-create-sessions-table
+      author: drissman
+      changes:
+        - createTable:
+            tableName: sessions
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: enrollment_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: monitor_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
+                  name: date
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: start_time
+                  type: time
+                  constraints:
+                    nullable: false
+              - column:
+                  name: end_time
+                  type: time
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(20)
+                  defaultValue: SCHEDULED
+                  constraints:
+                    nullable: false
+              - column:
+                  name: meeting_point
+                  type: varchar(255)
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: sessions
+            baseColumnNames: enrollment_id
+            referencedTableName: enrollments
+            referencedColumnNames: id
+            constraintName: fk_sessions_enrollment
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: sessions
+            baseColumnNames: monitor_id
+            referencedTableName: monitors
+            referencedColumnNames: id
+            constraintName: fk_sessions_monitor
+            onDelete: SET NULL

@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 038-add-payment-phone-to-invoices
+      author: drissman
+      changes:
+        - addColumn:
+            tableName: invoices
+            columns:
+              - column:
+                  name: payment_phone
+                  type: varchar(30)
+                  constraints:
+                    nullable: true

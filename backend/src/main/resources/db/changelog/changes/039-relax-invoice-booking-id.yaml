@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 039-relax-invoice-booking-id
+      author: drissman
+      comment: >
+        Le flux moderne rattache les factures aux enrollments (022) et non plus
+        aux bookings ; booking_id devient optionnel.
+      changes:
+        - dropNotNullConstraint:
+            tableName: invoices
+            columnName: booking_id
+            columnDataType: uuid

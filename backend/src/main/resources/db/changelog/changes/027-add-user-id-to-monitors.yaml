@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 027-add-user-id-to-monitors
+      author: drissman
+      changes:
+        - addColumn:
+            tableName: monitors
+            columns:
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_monitor_user
+                    references: users(id)

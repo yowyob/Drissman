@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: 017-add-is-demo-column
+      author: drissman
+      changes:
+        # Add is_demo column to schools table
+        - addColumn:
+            tableName: schools
+            columns:
+              - column:
+                  name: is_demo
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+        # Mark existing demo schools as is_demo = true
+        - update:
+            tableName: schools
+            columns:
+              - column:
+                  name: is_demo
+                  valueBoolean: true
+            where: id IN ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', '33333333-3333-3333-3333-333333333333')

@@ -1,0 +1,90 @@
+databaseChangeLog:
+  - changeSet:
+      id: 025-create-modules-table
+      author: drissman
+      changes:
+        - createTable:
+            tableName: modules
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: school_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_modules_school
+                    references: schools(id)
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category
+                  type: varchar(50)
+                  defaultValue: CODE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: order_index
+                  type: int
+                  defaultValue: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: required_hours
+                  type: int
+                  defaultValue: 1
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 025-add-lesson-type-and-module
+      author: drissman
+      changes:
+        - addColumn:
+            tableName: lessons
+            columns:
+              - column:
+                  name: lesson_type
+                  type: varchar(50)
+                  defaultValue: CODE
+              - column:
+                  name: module_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_lessons_module
+                    references: modules(id)
+              - column:
+                  name: description
+                  type: text
+
+  - changeSet:
+      id: 025-add-registration-attendance
+      author: drissman
+      changes:
+        - addColumn:
+            tableName: lesson_registrations
+            columns:
+              - column:
+                  name: attended_at
+                  type: timestamp
+              - column:
+                  name: notes
+                  type: text

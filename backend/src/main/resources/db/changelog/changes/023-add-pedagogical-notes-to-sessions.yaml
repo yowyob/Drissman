@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 023-add-pedagogical-notes-to-sessions
+      author: antigravity
+      changes:
+        - addColumn:
+            tableName: sessions
+            columns:
+              - column:
+                  name: pedagogical_notes
+                  type: TEXT

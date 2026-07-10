@@ -1,0 +1,54 @@
+databaseChangeLog:
+  - changeSet:
+      id: 035-create-session-offers-table
+      author: drissman
+      changes:
+        - createTable:
+            tableName: session_offers
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: training_period_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: offer_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: max_students_override
+                  type: integer
+              - column:
+                  name: price_override
+                  type: integer
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: now()
+
+        - addForeignKeyConstraint:
+            baseTableName: session_offers
+            baseColumnNames: training_period_id
+            referencedTableName: training_periods
+            referencedColumnNames: id
+            constraintName: fk_session_offers_training_period
+
+        - addForeignKeyConstraint:
+            baseTableName: session_offers
+            baseColumnNames: offer_id
+            referencedTableName: offers
+            referencedColumnNames: id
+            constraintName: fk_session_offers_offer
+
+        - addUniqueConstraint:
+            tableName: session_offers
+            columnNames: training_period_id, offer_id
+            constraintName: uk_session_offer_unique

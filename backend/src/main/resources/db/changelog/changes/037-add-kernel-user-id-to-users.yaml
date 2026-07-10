@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 037-add-kernel-user-id-to-users
+      author: drissman
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: kernel_user_id
+                  type: uuid
+                  constraints:
+                    nullable: true

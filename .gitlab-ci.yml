@@ -1,0 +1,55 @@
+# ============================================================================
+#  Drissman — déploiement auto sur le serveur yowyob.
+#  Push sur main => build de l'image puis déploiement.
+#  Variables GitLab requises (Settings > CI/CD > Variables) :
+#    SSH_KEY, HOST_ADDR (173.212.216.20), HOST_USER (gi)
+#  + runner taggé `kernel-core`. Le .env est déposé manuellement
+#  dans $DEPLOY_DIR sur le serveur (voir .env.example).
+# ============================================================================
+
+stages:
+  - build
+  - deploy
+
+variables:
+  GIT_DEPTH: "0"
+  IMAGE: "drissman/backend"
+  DEPLOY_DIR: "/home/gi/drissman"
+  IMMUTABLE_TAG: "${CI_COMMIT_BRANCH}_${CI_COMMIT_SHORT_SHA}"
+
+Build-image:
+  stage: build
+  tags: [kernel-core]
+  image: docker:27
+  variables:
+    DOCKER_HOST: "unix:///var/run/docker.sock"
+    DOCKER_BUILDKIT: "1"
+  script:
+    - docker build -t "$IMAGE:$IMMUTABLE_TAG" -t "$IMAGE:$CI_COMMIT_BRANCH" ./backend
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy:
+  stage: deploy
+  tags: [kernel-core]
+  image: alpine:latest
+  before_script:
+    - which ssh-agent || apk add --no-cache openssh
+    - eval $(ssh-agent -s)
+    - echo "$SSH_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan "$HOST_ADDR" >> ~/.ssh/known_hosts 2>/dev/null
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - scp -o StrictHostKeyChecking=no docker-compose.prod.yml "${HOST_USER}@${HOST_ADDR}:${DEPLOY_DIR}/docker-compose.prod.yml"
+    - |
+      ssh "${HOST_USER}@${HOST_ADDR}" "
+        set -e
+        cd '${DEPLOY_DIR}'
+        export APP_IMAGE='$IMAGE:$IMMUTABLE_TAG'
+        docker compose -f docker-compose.prod.yml up -d
+        docker compose -f docker-compose.prod.yml ps
+        docker image prune -f
+      "
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'

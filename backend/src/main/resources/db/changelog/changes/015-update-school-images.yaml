@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: 015-update-school-images
+      author: drissman
+      changes:
+        - update:
+            tableName: schools
+            columns:
+              - column:
+                  name: image_url
+                  value: "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?q=80&w=2070&auto=format&fit=crop"
+            where: "id = '11111111-1111-1111-1111-111111111111'"
+        - update:
+            tableName: schools
+            columns:
+              - column:
+                  name: image_url
+                  value: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=2070&auto=format&fit=crop"
+            where: "id = '22222222-2222-2222-2222-222222222222'"
+        - update:
+            tableName: schools
+            columns:
+              - column:
+                  name: image_url
+                  value: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1964&auto=format&fit=crop"
+            where: "id = '33333333-3333-3333-3333-333333333333'"

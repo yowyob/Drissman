@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 043-add-provider-reference-to-invoices
+      author: drissman
+      comment: Référence de transaction du prestataire de paiement (Yowyob Payment).
+      changes:
+        - addColumn:
+            tableName: invoices
+            columns:
+              - column:
+                  name: provider_reference
+                  type: varchar(60)
+                  constraints:
+                    nullable: true

@@ -1,0 +1,47 @@
+﻿
+> drissman-frontend@0.1.0 build
+> next build
+
+Ôû▓ Next.js 16.1.3 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 46s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/24) ...
+  Generating static pages using 7 workers (6/24) 
+  Generating static pages using 7 workers (12/24) 
+  Generating static pages using 7 workers (18/24) 
+Ô£ô Generating static pages using 7 workers (24/24) in 5.1s
+  Finalizing page optimization ...
+
+Route (app)
+Ôöî Ôùï /
+Ôö£ Ôùï /_not-found
+Ôö£ Ôùï /code
+Ôö£ Ôùï /contact
+Ôö£ Ôùï /dashboard
+Ôö£ Ôùï /dashboard/availabilities
+Ôö£ Ôùï /dashboard/bookings
+Ôö£ Ôùï /dashboard/curriculum
+Ôö£ Ôùï /dashboard/help
+Ôö£ Ôùï /dashboard/invoices
+Ôö£ Ôùï /dashboard/monitors
+Ôö£ Ôùï /dashboard/offers
+Ôö£ Ôùï /dashboard/planning
+Ôö£ Ôùï /dashboard/rewards
+Ôö£ Ôùï /dashboard/school
+Ôö£ Ôùï /dashboard/sessions
+Ôö£ Ôùï /dashboard/settings
+Ôö£ Ôùï /dashboard/theory
+Ôö£ Ôùï /login
+Ôö£ Ôùï /partners
+Ôö£ Ôùï /register
+Ôö£ ãÆ /school/[id]
+Ôöö Ôùï /search
+
+
+Ôùï  (Static)   prerendered as static content
+ãÆ  (Dynamic)  server-rendered on demand
+

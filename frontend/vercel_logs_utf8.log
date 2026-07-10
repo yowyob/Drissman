@@ -1,0 +1,221 @@
+﻿node.exe : Vercel CLI 
+50.22.1
+Au caractère 
+C:\Program Files\nodejs
+\npx.ps1:29 : 3
++   & $NODE_EXE 
+$NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Vercel CLI 50   
+ .22.1:String) [],     
+RemoteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+Retrieving projectÔÇª
+Fetching logs...
+TIME         HOST      
+                       
+                LEVEL  
+                    
+STATUS  MESSAGE        
+        
+20:58:44.32  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/contact      200     
+(no message)           
+20:58:43.15  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/login        200     
+(no message)           
+20:58:43.14  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/login        200     
+(no message)           
+20:58:43.14  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/login        200     
+(no message)           
+20:58:43.00  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/contact      200     
+(no message)           
+20:58:43.00  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/contact      200     
+(no message)           
+20:58:42.60  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/register     200     
+(no message)           
+20:58:42.60  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/contact      200     
+(no message)           
+20:58:41.84  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/register     200     
+(no message)           
+20:58:41.84  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/register     200     
+(no message)           
+20:58:41.47  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/register     200     
+(no message)           
+20:58:41.46  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/register     200     
+(no message)           
+20:58:41.06  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/login        200     
+(no message)           
+20:58:41.04  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/contact      200     
+(no message)           
+20:58:41.02  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/register     200     
+(no message)           
+20:58:39.20  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/login        200     
+(no message)           
+20:58:37.45  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/login        200     
+(no message)           
+20:58:30.78  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/register     200     
+(no message)           
+20:58:30.76  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/login        200     
+(no message)           
+20:58:30.72  
+drissman0.vercel.app   
+                       
+   info   Ôùç GET 
+/contact      200     
+(no message)           
+20:57:54.98  drissman-9
+1t273ju3-japh004s-proje
+cts.vercel.app  info   
+Ôùç GET /             
+200     (no message)   
+        
+20:55:23.61  drissman-9
+1t273ju3-japh004s-proje
+cts.vercel.app  info   
+Ôùç GET /login        
+200     (no message)   
+        
+20:55:23.56  drissman-9
+1t273ju3-japh004s-proje
+cts.vercel.app  info   
+Ôùç GET /login        
+200     (no message)   
+        
+20:55:23.13  drissman-9
+1t273ju3-japh004s-proje
+cts.vercel.app  info   
+Ôùç GET /             
+200     (no message)   
+        
+20:55:23.12  drissman-9
+1t273ju3-japh004s-proje
+cts.vercel.app  info   
+Ôùç GET /             
+200     (no message)   
+        
+20:55:22.62  drissman-9
+1t273ju3-japh004s-proje
+cts.vercel.app  info   
+Ôùç GET /             
+200     (no message)   
+        
+20:55:22.58  drissman-9
+1t273ju3-japh004s-proje
+cts.vercel.app  info   
+Ôùç GET /             
+200     (no message)   
+        
+20:46:23.93  drissman-k
+02jc4m43-japh004s-proje
+cts.vercel.app  info   
+Ôùç GET /login        
+200     (no message)   
+        
+20:46:23.90  drissman-k
+02jc4m43-japh004s-proje
+cts.vercel.app  info   
+Ôùç GET /login        
+200     (no message)   
+        
+20:46:23.43  drissman-k
+02jc4m43-japh004s-proje
+cts.vercel.app  info   
+Ôùç GET /             
+200     (no message)   
+        
+20:46:23.05  drissman-k
+02jc4m43-japh004s-proje
+cts.vercel.app  info   
+Ôùç GET /             
+200     (no message)   
+        
+20:46:22.98  drissman-k
+02jc4m43-japh004s-proje
+cts.vercel.app  info   
+Ôùç GET /             
+200     (no message)   
+        
+Fetched 32 logs for jap
+h004s-projects/drissman
+ on branch main

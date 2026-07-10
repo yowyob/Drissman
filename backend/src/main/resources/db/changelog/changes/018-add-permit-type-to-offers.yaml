@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 018-add-permit-type-to-offers
+      author: system
+      changes:
+        - addColumn:
+            tableName: offers
+            columns:
+              - column:
+                  name: permit_type
+                  type: VARCHAR(10)
+                  defaultValue: "B"
+                  constraints:
+                    nullable: true
+      comment: "Add permit_type column to offers table for school admins to specify the type of license"
