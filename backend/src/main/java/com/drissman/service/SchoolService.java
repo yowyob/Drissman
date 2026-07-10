@@ -57,6 +57,7 @@ public class SchoolService {
                                                                                 .price(offer.getPrice())
                                                                                 .hours(offer.getHours())
                                                                                 .permitType(offer.getPermitType())
+                                                                                .imageUrl(offer.getImageUrl())
                                                                                 .build())
                                                                 .toList();
                                                 dto.setOffers(offerDtos);
@@ -125,6 +126,7 @@ public class SchoolService {
                                                                         .price(offer.getPrice())
                                                                         .hours(offer.getHours())
                                                                         .permitType(offer.getPermitType())
+                                                                        .imageUrl(offer.getImageUrl())
                                                                         .build())
                                                         .collectList()
                                                         .map(offers -> {

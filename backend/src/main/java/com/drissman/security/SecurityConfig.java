@@ -87,6 +87,9 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/api/vehicles/*/position")
                         .hasAnyRole("MONITOR", "SCHOOL_ADMIN")
 
+                        // Callback prestataire de paiement (Stripe via Yowyob) : non authentifié
+                        .pathMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
+
                         // Role-scoped areas
                         .pathMatchers("/api/kernel/admin/**").hasAnyRole("SCHOOL_ADMIN", "SUPER_ADMIN")
                         .pathMatchers("/api/superadmin/**").hasRole("SUPER_ADMIN")

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { vehicleService, type VehicleDto } from "@/lib/vehicle-service";
@@ -36,8 +36,25 @@ interface LiveFleetMapClientProps {
     height?: string;
 }
 
+type Trail = [number, number][];
+
+// Couleurs de trajet, assignées de façon stable par véhicule.
+const TRAIL_COLORS = ["#f5a623", "#4a90e2", "#7ed321", "#e94b7b", "#9013fe", "#50e3c2"];
+
+/** Ajoute un point au trajet s'il diffère du dernier (évite les doublons). */
+function appendPoint(trail: Trail | undefined, lat: number, lng: number): Trail {
+    const next: Trail = trail ? [...trail] : [];
+    const last = next[next.length - 1];
+    if (!last || last[0] !== lat || last[1] !== lng) {
+        next.push([lat, lng]);
+    }
+    // Borne mémoire : on ne garde que les 200 derniers points.
+    return next.length > 200 ? next.slice(next.length - 200) : next;
+}
+
 export default function LiveFleetMapClient({ schoolId, height = "420px" }: LiveFleetMapClientProps) {
     const [vehicles, setVehicles] = useState<Record<string, VehicleDto>>({});
+    const [trails, setTrails] = useState<Record<string, Trail>>({});
     const [live, setLive] = useState(false);
 
     useEffect(() => {
@@ -49,6 +66,18 @@ export default function LiveFleetMapClient({ schoolId, height = "420px" }: LiveF
             .then((list) => {
                 if (cancelled) return;
                 setVehicles(Object.fromEntries(list.map((v) => [v.id, v])));
+                // Amorce le trajet avec la dernière position connue, SANS écraser
+                // les points déjà reçus en SSE (évite une course entre ce fetch et
+                // les premiers événements, et la perte de trajet au remount).
+                setTrails((prev) => {
+                    const seeded = { ...prev };
+                    for (const v of list) {
+                        if (v.latitude != null && v.longitude != null && !seeded[v.id]) {
+                            seeded[v.id] = [[v.latitude as number, v.longitude as number]];
+                        }
+                    }
+                    return seeded;
+                });
             })
             .catch(() => {
                 /* la carte reste vide */
@@ -58,6 +87,16 @@ export default function LiveFleetMapClient({ schoolId, height = "420px" }: LiveF
         const unsubscribe = vehicleService.subscribe(schoolId, (vehicle) => {
             setLive(true);
             setVehicles((prev) => ({ ...prev, [vehicle.id]: vehicle }));
+            if (vehicle.latitude != null && vehicle.longitude != null) {
+                setTrails((prev) => ({
+                    ...prev,
+                    [vehicle.id]: appendPoint(
+                        prev[vehicle.id],
+                        vehicle.latitude as number,
+                        vehicle.longitude as number,
+                    ),
+                }));
+            }
         });
 
         return () => {
@@ -83,6 +122,21 @@ export default function LiveFleetMapClient({ schoolId, height = "420px" }: LiveF
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 <FitToFleet vehicles={positioned} />
+                {positioned.map((v, i) => {
+                    const trail = trails[v.id];
+                    if (!trail || trail.length < 2) return null;
+                    return (
+                        <Polyline
+                            key={`trail-${v.id}`}
+                            positions={trail}
+                            pathOptions={{
+                                color: TRAIL_COLORS[i % TRAIL_COLORS.length],
+                                weight: 3,
+                                opacity: 0.75,
+                            }}
+                        />
+                    );
+                })}
                 {positioned.map((v) => (
                     <Marker key={v.id} position={[v.latitude as number, v.longitude as number]} icon={carIcon}>
                         <Popup>

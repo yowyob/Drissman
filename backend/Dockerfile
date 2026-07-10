@@ -19,8 +19,9 @@ WORKDIR /app
 # curl requis par le healthcheck Docker (infra yowyob)
 RUN apk add --no-cache curl
 
-# Create a non-root user
-RUN addgroup -S spring && adduser -S spring -G spring
+# Create a non-root user + dossier d'uploads inscriptible (persisté par volume)
+RUN addgroup -S spring && adduser -S spring -G spring \
+    && mkdir -p /app/uploads/images && chown -R spring:spring /app/uploads
 USER spring:spring
 
 # Copy the built jar from the build stage

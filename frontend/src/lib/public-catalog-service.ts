@@ -7,6 +7,7 @@ export interface PublicSchoolOfferDto {
   price: number;
   hours: number;
   permitType: string;
+  imageUrl?: string;
 }
 
 export interface PublicSchoolDto {

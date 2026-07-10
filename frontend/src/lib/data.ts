@@ -15,6 +15,7 @@ export interface Offer {
     description: string;
     type: "Permis B" | "Permis A" | "Code" | "Conduite Accompagnée";
     features: string[];
+    imageUrl?: string;
 }
 
 export interface Instructor {

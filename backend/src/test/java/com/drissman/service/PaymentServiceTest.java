@@ -45,6 +45,9 @@ class PaymentServiceTest {
         @Mock
         private com.drissman.payment.YowyobPaymentClient yowyobPaymentClient;
 
+        @Mock
+        private com.drissman.kernel.KernelAccountingService kernelAccountingService;
+
         @InjectMocks
         private PaymentService paymentService;
 

@@ -34,6 +34,21 @@ public class PaymentController {
                 .flatMapMany(paymentService::getPaymentsForUser);
     }
 
+    /**
+     * Callback du prestataire (Stripe via Yowyob Payment). Non authentifié :
+     * confirme la facture d'après la référence provider, en complément du
+     * polling /refresh côté candidat. Idempotent.
+     */
+    @PostMapping("/webhook")
+    @ResponseStatus(HttpStatus.OK)
+    public Mono<Void> webhook(@RequestBody java.util.Map<String, Object> payload) {
+        Object ref = payload.getOrDefault("reference", payload.get("providerReference"));
+        Object status = payload.getOrDefault("status", payload.get("state"));
+        return paymentService.handleProviderWebhook(
+                ref != null ? ref.toString() : null,
+                status != null ? status.toString() : null);
+    }
+
     /** Interroge le prestataire (paiement carte) et met le statut à jour. */
     @GetMapping("/{invoiceId}/refresh")
     public Mono<PaymentDto> refresh(Principal principal, @PathVariable UUID invoiceId) {

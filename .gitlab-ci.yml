@@ -8,6 +8,7 @@
 # ============================================================================
 
 stages:
+  - test
   - build
   - deploy
 
@@ -16,6 +17,28 @@ variables:
   IMAGE: "drissman/backend"
   DEPLOY_DIR: "/home/gi/drissman"
   IMMUTABLE_TAG: "${CI_COMMIT_BRANCH}_${CI_COMMIT_SHORT_SHA}"
+
+# Barrière qualité : les tests unitaires du backend (19) doivent passer
+# avant tout build/déploiement. Pas de Docker requis (mocks Mockito).
+Backend-tests:
+  stage: test
+  tags: [kernel-core]
+  image: maven:3.9.6-eclipse-temurin-21-alpine
+  variables:
+    MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  cache:
+    key: "maven-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .m2/repository
+  script:
+    - cd backend
+    - mvn -B -ntp test
+  artifacts:
+    when: always
+    reports:
+      junit: backend/target/surefire-reports/TEST-*.xml
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
 
 Build-image:
   stage: build

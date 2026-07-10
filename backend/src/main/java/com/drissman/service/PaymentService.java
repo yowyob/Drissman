@@ -8,6 +8,7 @@ import com.drissman.domain.repository.EnrollmentRepository;
 import com.drissman.domain.repository.InvoiceRepository;
 import com.drissman.domain.repository.OfferRepository;
 import com.drissman.domain.repository.UserRepository;
+import com.drissman.kernel.KernelAccountingService;
 import com.drissman.payment.YowyobPaymentClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,7 @@ public class PaymentService {
     private final OfferRepository offerRepository;
     private final UserRepository userRepository;
     private final YowyobPaymentClient yowyobPaymentClient;
+    private final KernelAccountingService kernelAccountingService;
 
     public Mono<PaymentDto> initiate(UUID userId, InitiatePaymentRequest request) {
         Invoice.PaymentMethod method;
@@ -141,10 +143,7 @@ public class PaymentService {
                                 String status = tx.path("status").asText("").toUpperCase(Locale.ROOT);
                                 if (status.equals("SUCCESS") || status.equals("COMPLETED")
                                         || status.equals("PAID") || status.equals("SUCCEEDED")) {
-                                    invoice.setStatus(Invoice.InvoiceStatus.PAID);
-                                    invoice.setPaidAt(LocalDateTime.now());
-                                    return invoiceRepository.save(invoice)
-                                            .flatMap(saved -> activateEnrollment(saved).thenReturn(saved));
+                                    return finalizePaid(invoice);
                                 }
                                 if (status.equals("FAILED") || status.equals("CANCELLED")
                                         || status.equals("EXPIRED")) {
@@ -212,12 +211,44 @@ public class PaymentService {
                     if (invoice.getStatus() == Invoice.InvoiceStatus.PAID) {
                         return Mono.just(invoice);
                     }
-                    invoice.setStatus(Invoice.InvoiceStatus.PAID);
-                    invoice.setPaidAt(LocalDateTime.now());
-                    return invoiceRepository.save(invoice)
-                            .flatMap(saved -> activateEnrollment(saved).thenReturn(saved));
+                    return finalizePaid(invoice);
                 })
                 .map(this::toDto);
+    }
+
+    /**
+     * Callback prestataire (Stripe via Yowyob Payment) : confirme ou échoue une
+     * facture d'après sa référence provider, en complément du polling /refresh.
+     * Idempotent — un rappel sur une facture déjà réglée est sans effet.
+     */
+    public Mono<Void> handleProviderWebhook(String providerReference, String rawStatus) {
+        if (providerReference == null || providerReference.isBlank()) {
+            return Mono.empty();
+        }
+        String status = rawStatus == null ? "" : rawStatus.trim().toUpperCase(Locale.ROOT);
+        return invoiceRepository.findByProviderReference(providerReference)
+                .filter(invoice -> invoice.getStatus() == Invoice.InvoiceStatus.PENDING)
+                .flatMap(invoice -> {
+                    if (status.equals("SUCCESS") || status.equals("COMPLETED")
+                            || status.equals("PAID") || status.equals("SUCCEEDED")) {
+                        return finalizePaid(invoice);
+                    }
+                    if (status.equals("FAILED") || status.equals("CANCELLED") || status.equals("EXPIRED")) {
+                        invoice.setStatus(Invoice.InvoiceStatus.FAILED);
+                        return invoiceRepository.save(invoice);
+                    }
+                    return Mono.just(invoice);
+                })
+                .then();
+    }
+
+    /** Transition unique vers PAID : facture réglée, inscription activée, reflet cashier-core. */
+    private Mono<Invoice> finalizePaid(Invoice invoice) {
+        invoice.setStatus(Invoice.InvoiceStatus.PAID);
+        invoice.setPaidAt(LocalDateTime.now());
+        return invoiceRepository.save(invoice)
+                .flatMap(saved -> activateEnrollment(saved).thenReturn(saved))
+                .doOnNext(kernelAccountingService::reflectPaidInvoiceInBackground);
     }
 
     private Mono<Void> activateEnrollment(Invoice invoice) {

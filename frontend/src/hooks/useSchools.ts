@@ -16,6 +16,7 @@ function mapSchoolOfferToUiOffer(offer: PublicSchoolDto["offers"][number]): Offe
     price: offer.price,
     type: mapPermitTypeToOfferType(offer.permitType),
     features: [`Permis ${offer.permitType || "B"}`, `${offer.hours || 0}h de formation`],
+    imageUrl: offer.imageUrl,
   };
 }
 

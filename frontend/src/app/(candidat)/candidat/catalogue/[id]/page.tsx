@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { PageTransition } from "@/components/ui/motion";
 import { enrollmentService, EnrollmentDto } from "@/lib/enrollment-service";
 import { paymentService } from "@/lib/payment-service";
+import { backendImageUrl } from "@/lib/admin-offer-service";
 
 interface Enrollment {
     id: string;
@@ -37,6 +38,7 @@ interface SchoolOffer {
     features?: string[];
     price: number;
     hours?: number;
+    imageUrl?: string;
     modules?: Array<{ id: string; name: string; category: string; requiredHours: number }>;
 }
 
@@ -222,7 +224,13 @@ export default function CatalogueDetailPage({ params }: PageProps) {
                         {school.offers.map((offer: SchoolOffer) => {
                             const enrolled = isEnrolled(offer.id);
                             return (
-                                <div key={offer.id} className={`bg-white/[0.03] rounded-2xl border p-5 transition-all ${enrolled ? "border-green-500/20" : "border-white/[0.06] hover:border-signal/20"}`}>
+                                <div key={offer.id} className={`bg-white/[0.03] rounded-2xl border overflow-hidden transition-all ${enrolled ? "border-green-500/20" : "border-white/[0.06] hover:border-signal/20"}`}>
+                                    {offer.imageUrl && (
+                                        <div className="h-32 w-full overflow-hidden">
+                                            <img src={backendImageUrl(offer.imageUrl) || undefined} alt={offer.title} className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
+                                    <div className="p-5">
                                     <div className="flex justify-between items-start mb-3">
                                         <h3 className="text-base font-black text-snow">{offer.title}</h3>
                                         <span className="bg-signal/10 text-signal text-[10px] font-bold px-2 py-0.5 rounded-lg">{offer.type}</span>
@@ -252,6 +260,7 @@ export default function CatalogueDetailPage({ params }: PageProps) {
                                                 S&apos;inscrire
                                             </button>
                                         )}
+                                    </div>
                                     </div>
                                 </div>
                             );
