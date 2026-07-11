@@ -29,7 +29,7 @@ export interface MonitorStudentProgressDto {
 }
 
 export const monitorService = {
-  getProfile: (token: string) => apiClient.get<{ id: string; userId: string; schoolId: string; firstName: string; lastName: string }>(
+  getProfile: (token: string) => apiClient.get<{ id: string; userId: string; schoolId: string; schoolName?: string; firstName: string; lastName: string }>(
     "/monitors/me",
     token,
   ),

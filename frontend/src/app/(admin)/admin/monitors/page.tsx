@@ -71,7 +71,7 @@ export default function MonitorsPage() {
     if (!formFirstName.trim() || !formLastName.trim()) return toast.error("Nom et prenom obligatoires");
     if (!formEmail.trim()) return toast.error("Email obligatoire");
     if (!formPhone.trim()) return toast.error("Telephone obligatoire");
-    if (!formLicenseNumber.trim()) return toast.error("Numero de licence obligatoire");
+    // Licence facultative : laissée vide, elle est stockee NULL cote backend.
     if (!formPassword.trim() || formPassword.length < 6) return toast.error("Mot de passe invalide");
 
     try {
@@ -188,7 +188,7 @@ export default function MonitorsPage() {
                 <input type="text" value={formLastName} onChange={(e) => setFormLastName(e.target.value)} placeholder="Nom" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-snow text-sm" />
               </div>
               <input type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} placeholder="moniteur@ecole.com" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-snow text-sm" />
-              <input type="text" value={formLicenseNumber} onChange={(e) => setFormLicenseNumber(e.target.value)} placeholder="Numero de licence" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-snow text-sm" />
+              <input type="text" value={formLicenseNumber} onChange={(e) => setFormLicenseNumber(e.target.value)} placeholder="Numero de licence (optionnel)" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-snow text-sm" />
               <input type="tel" value={formPhone} onChange={(e) => setFormPhone(e.target.value)} placeholder="+237..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-snow text-sm" />
 
               <div className="relative">

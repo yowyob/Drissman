@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks";
 import { Save, Building2, Phone, Mail, MapPin, Globe, Upload, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/api-client";
 
 export default function SettingsPage() {
-    const { user } = useAuth();
+    const { user, token } = useAuth();
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
 
@@ -20,12 +21,12 @@ export default function SettingsPage() {
     const [website, setWebsite] = useState("");
     const [description, setDescription] = useState("");
 
-    // Load saved settings on mount
+    // Charge les paramètres réels de l'école depuis le backend.
     useEffect(() => {
-        try {
-            const stored = localStorage.getItem("school_settings");
-            if (stored) {
-                const s = JSON.parse(stored);
+        if (!user?.schoolId) return;
+        void apiClient
+            .get<any>(`/schools/${user.schoolId}`)
+            .then((s) => {
                 setSchoolName(s.name || "");
                 setAddress(s.address || "");
                 setCity(s.city || "");
@@ -34,24 +35,27 @@ export default function SettingsPage() {
                 setEmail(s.email || "");
                 setWebsite(s.website || "");
                 setDescription(s.description || "");
-            }
-        } catch { /* ignore */ }
-    }, []);
+            })
+            .catch(() => { /* école pas encore chargée */ });
+    }, [user?.schoolId]);
 
     const handleSave = async () => {
         if (!schoolName.trim()) { toast.error("Le nom de l'auto-école est obligatoire"); return; }
+        if (!token) { toast.error("Session expirée — reconnectez-vous"); return; }
         setSaving(true);
-        await new Promise(r => setTimeout(r, 500));
-
-        // Save to localStorage so the catalogue can read it
-        localStorage.setItem("school_settings", JSON.stringify({
-            name: schoolName, address, city, region, phone, email, website, description
-        }));
-
-        setSaving(false);
-        setSaved(true);
-        toast.success("Paramètres enregistrés — votre école apparaîtra dans le catalogue !");
-        setTimeout(() => setSaved(false), 3000);
+        try {
+            // Persistance réelle en base via le backend (PATCH /schools/admin).
+            await apiClient.patch("/schools/admin", {
+                name: schoolName, description, address, city, region, phone, email, website,
+            }, token);
+            setSaved(true);
+            toast.success("Paramètres enregistrés");
+            setTimeout(() => setSaved(false), 3000);
+        } catch (e: any) {
+            toast.error(e.message || "Échec de l'enregistrement");
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (

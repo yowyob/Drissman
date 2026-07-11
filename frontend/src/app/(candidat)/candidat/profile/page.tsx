@@ -3,11 +3,27 @@
 import { useAuth } from "@/hooks";
 import { User, Mail, Phone, BookOpen, LogOut, Shield, School } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { PageTransition } from "@/components/ui/motion";
+import { enrollmentService, type EnrollmentDto } from "@/lib/enrollment-service";
+import { PasswordChangeModal } from "@/components/profile/password-change-modal";
 
 export default function CandidatProfilePage() {
-    const { user, logout } = useAuth();
+    const { user, token, logout } = useAuth();
     const router = useRouter();
+    const [active, setActive] = useState<EnrollmentDto | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
+
+    useEffect(() => {
+        if (!token) return;
+        void enrollmentService.getMyEnrollments(token)
+            .then((list) => {
+                // Formation en cours = inscription ACTIVE, sinon la plus récente.
+                const activeOne = list.find((e) => e.status === "ACTIVE") ?? list[0] ?? null;
+                setActive(activeOne);
+            })
+            .catch(() => { /* pas d'inscription chargée */ });
+    }, [token]);
 
     return (
         <PageTransition className="space-y-8">
@@ -59,16 +75,32 @@ export default function CandidatProfilePage() {
                     <School className="h-4 w-4 text-signal" />
                     <h2 className="text-sm font-bold text-snow">Mon Auto-École</h2>
                 </div>
-                <div className="flex flex-col items-center justify-center py-4 text-center">
-                    <School className="h-8 w-8 text-mist/15 mb-2" />
-                    <p className="text-sm text-mist/50">Information auto-école</p>
-                    <p className="text-[10px] text-mist/30 mt-1">Sera affiché une fois connecté à une auto-école</p>
-                </div>
+                {active ? (
+                    <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-mist/50">Auto-école</span>
+                            <span className="text-snow font-bold">{active.schoolName}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-mist/50">Formation</span>
+                            <span className="text-snow font-bold">{active.offerName}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-mist/50">Statut</span>
+                            <span className="text-signal font-bold">{active.status}</span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-4 text-center">
+                        <School className="h-8 w-8 text-mist/15 mb-2" />
+                        <p className="text-sm text-mist/50">Aucune inscription en cours</p>
+                    </div>
+                )}
             </div>
 
             {/* Actions */}
             <div className="space-y-3">
-                <button className="w-full flex items-center gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-sm font-bold text-snow hover:border-signal/20 hover:bg-signal/[0.02] transition-all">
+                <button onClick={() => setShowPassword(true)} className="w-full flex items-center gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-sm font-bold text-snow hover:border-signal/20 hover:bg-signal/[0.02] transition-all">
                     <Shield className="h-4 w-4 text-mist/40" />
                     Modifier mon mot de passe
                 </button>
@@ -78,6 +110,8 @@ export default function CandidatProfilePage() {
                     Déconnexion
                 </button>
             </div>
+
+            {showPassword && <PasswordChangeModal onClose={() => setShowPassword(false)} />}
         </PageTransition>
     );
 }

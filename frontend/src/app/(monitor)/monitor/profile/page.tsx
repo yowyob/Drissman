@@ -3,11 +3,24 @@
 import { useAuth } from "@/hooks";
 import { Mail, Shield, LogOut, Car } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { PageTransition } from "@/components/ui/motion";
+import { monitorService } from "@/lib/monitor-service";
+import { cachedGet } from "@/lib/offline/offline-fetch";
+import { PasswordChangeModal } from "@/components/profile/password-change-modal";
 
 export default function MonitorProfilePage() {
-    const { user, logout } = useAuth();
+    const { user, token, logout } = useAuth();
     const router = useRouter();
+    const [schoolName, setSchoolName] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
+
+    useEffect(() => {
+        if (!token) return;
+        void cachedGet(user?.id ?? "anon", "monitor-profile", () => monitorService.getProfile(token))
+            .then((r) => setSchoolName((r.data as any).schoolName ?? null))
+            .catch(() => { /* hors ligne : nom d'école indisponible */ });
+    }, [token, user?.id]);
 
     return (
         <PageTransition className="space-y-8">
@@ -47,7 +60,7 @@ export default function MonitorProfilePage() {
                         <Car className="h-4 w-4 text-mist/40" />
                         <div>
                             <p className="text-[10px] text-mist/30 uppercase tracking-wider font-bold">Auto-École</p>
-                            <p className="text-sm text-mist/50">Sera affiché une fois connecté au backend</p>
+                            <p className="text-sm text-snow">{schoolName || "—"}</p>
                         </div>
                     </div>
                 </div>
@@ -55,7 +68,7 @@ export default function MonitorProfilePage() {
 
             {/* Actions */}
             <div className="space-y-3">
-                <button className="w-full flex items-center gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-sm font-bold text-snow hover:border-signal/20 hover:bg-signal/[0.02] transition-all">
+                <button onClick={() => setShowPassword(true)} className="w-full flex items-center gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-sm font-bold text-snow hover:border-signal/20 hover:bg-signal/[0.02] transition-all">
                     <Shield className="h-4 w-4 text-mist/40" />
                     Modifier mon mot de passe
                 </button>
@@ -65,6 +78,8 @@ export default function MonitorProfilePage() {
                     Déconnexion
                 </button>
             </div>
+
+            {showPassword && <PasswordChangeModal onClose={() => setShowPassword(false)} />}
         </PageTransition>
     );
 }

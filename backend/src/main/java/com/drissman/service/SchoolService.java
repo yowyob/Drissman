@@ -146,6 +146,18 @@ public class SchoolService {
                                                 school.setDescription(request.getDescription());
                                         if (request.getImageUrl() != null)
                                                 school.setImageUrl(request.getImageUrl());
+                                        if (request.getAddress() != null)
+                                                school.setAddress(request.getAddress());
+                                        if (request.getCity() != null)
+                                                school.setCity(request.getCity());
+                                        if (request.getRegion() != null)
+                                                school.setRegion(request.getRegion());
+                                        if (request.getPhone() != null)
+                                                school.setPhone(request.getPhone());
+                                        if (request.getEmail() != null)
+                                                school.setEmail(request.getEmail());
+                                        if (request.getWebsite() != null)
+                                                school.setWebsite(request.getWebsite());
                                         return schoolRepository.save(school);
                                 })
                                 .flatMap(savedSchool -> savedSchool != null ? findById(savedSchool.getId())

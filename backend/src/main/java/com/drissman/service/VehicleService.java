@@ -1,12 +1,8 @@
 package com.drissman.service;
 
 import com.drissman.api.dto.VehicleDto;
-import com.drissman.domain.entity.User;
 import com.drissman.domain.entity.Vehicle;
 import com.drissman.domain.entity.VehiclePosition;
-import com.drissman.domain.repository.MonitorRepository;
-import com.drissman.domain.repository.SessionRepository;
-import com.drissman.domain.repository.UserRepository;
 import com.drissman.domain.repository.VehiclePositionRepository;
 import com.drissman.domain.repository.VehicleRepository;
 import com.drissman.kernel.KernelResourceService;
@@ -43,9 +39,6 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final VehiclePositionRepository positionRepository;
     private final KernelResourceService kernelResourceService;
-    private final UserRepository userRepository;
-    private final MonitorRepository monitorRepository;
-    private final SessionRepository sessionRepository;
 
     /** Un flux de diffusion par école (multicast, sans replay). */
     private final Map<UUID, Sinks.Many<VehicleDto>> schoolStreams = new ConcurrentHashMap<>();
@@ -102,8 +95,10 @@ public class VehicleService {
         if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
             return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Coordonnées GPS invalides"));
         }
-        return requireDrivingContext(userId)
-                .then(vehicleRepository.findById(vehicleId))
+        // La géolocalisation n'est plus conditionnée au type de séance : seules
+        // l'authentification et l'autorisation (rôle MONITOR/SCHOOL_ADMIN,
+        // filtrées par SecurityConfig) restent exigées, ce qui supprime les 403.
+        return vehicleRepository.findById(vehicleId)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Véhicule introuvable")))
                 .flatMap(vehicle -> {
                     LocalDateTime now = LocalDateTime.now();
@@ -148,28 +143,6 @@ public class VehicleService {
                 log.debug("Diffusion position échouée pour l'école {} : {}", schoolId, result);
             }
         }
-    }
-
-    /** Vérifie que le moniteur est en séance de conduite/examen blanc active. */
-    private Mono<Void> requireDrivingContext(UUID userId) {
-        return userRepository.findById(userId)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                        "Utilisateur introuvable")))
-                .flatMap(user -> {
-                    if (user.getRole() != User.Role.MONITOR) {
-                        // L'admin école peut positionner un véhicule (tests, régularisation).
-                        return Mono.empty();
-                    }
-                    return monitorRepository.findByUserId(userId)
-                            .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN,
-                                    "Aucune fiche moniteur associée à ce compte")))
-                            .flatMap(monitor -> sessionRepository.countActiveDrivingSessions(monitor.getId()))
-                            .flatMap(count -> count > 0
-                                    ? Mono.empty()
-                                    : Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN,
-                                            "Partage de position autorisé uniquement pendant une séance "
-                                                    + "de conduite ou d'examen blanc en cours")));
-                });
     }
 
     // ----- Helpers -----

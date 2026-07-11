@@ -15,6 +15,7 @@ import java.util.UUID;
 public class MonitorDto {
     private UUID id;
     private UUID schoolId;
+    private String schoolName;
     private String firstName;
     private String lastName;
     private String licenseNumber;

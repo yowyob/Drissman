@@ -36,6 +36,11 @@ public class AdminSessionController {
                 .flatMap(schoolId -> sessionService.scheduleSession(schoolId, request));
     }
 
+    @GetMapping
+    public Flux<SessionDto> getSchoolSessions(Principal principal) {
+        return getSchoolId(principal).flatMapMany(sessionService::getSessionsForSchool);
+    }
+
     @GetMapping("/enrollment/{enrollmentId}")
     public Flux<SessionDto> getSessionsByEnrollment(
             Principal principal,

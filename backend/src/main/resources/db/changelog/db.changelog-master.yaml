@@ -91,3 +91,5 @@ databaseChangeLog:
       file: db/changelog/changes/043-add-provider-reference-to-invoices.yaml
   - include:
       file: db/changelog/changes/044-offline-sync.yaml
+  - include:
+      file: db/changelog/changes/045-monitor-license-nullable.yaml

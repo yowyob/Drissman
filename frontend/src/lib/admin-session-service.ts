@@ -52,6 +52,8 @@ export const adminSessionService = {
     ),
   create: (payload: CreateSessionPayload, token: string) =>
     apiClient.post<SessionDto>("/schools/admin/sessions", payload, token),
+  bySchool: (token: string) =>
+    apiClient.get<SessionDto[]>("/schools/admin/sessions", token),
   byEnrollment: (enrollmentId: string, token: string) =>
     apiClient.get<SessionDto[]>(`/schools/admin/sessions/enrollment/${enrollmentId}`, token),
 };

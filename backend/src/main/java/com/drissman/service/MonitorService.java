@@ -6,10 +6,13 @@ import com.drissman.api.dto.UpdateMonitorRequest;
 import com.drissman.domain.entity.Monitor;
 import com.drissman.domain.entity.User;
 import com.drissman.domain.repository.MonitorRepository;
+import com.drissman.domain.repository.SchoolRepository;
 import com.drissman.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -25,6 +28,7 @@ public class MonitorService {
 
     private final MonitorRepository monitorRepository;
     private final UserRepository userRepository;
+    private final SchoolRepository schoolRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -58,13 +62,30 @@ public class MonitorService {
                 .userId(userId)
                 .firstName(request.getFirstName() != null ? request.getFirstName().trim() : null)
                 .lastName(request.getLastName() != null ? request.getLastName().trim() : null)
-                .licenseNumber(request.getLicenseNumber() != null ? request.getLicenseNumber().trim() : null)
+                // Licence optionnelle : une valeur vide devient NULL (PostgreSQL
+                // autorise plusieurs NULL sous une contrainte d'unicité), ce qui
+                // permet de créer des moniteurs dont le permis n'est pas renseigné.
+                .licenseNumber(blankToNull(request.getLicenseNumber()))
                 .phoneNumber(request.getPhoneNumber() != null ? request.getPhoneNumber().trim() : null)
                 .status(Monitor.MonitorStatus.ACTIVE)
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        return monitorRepository.save(monitor).map(this::mapToDto);
+        return monitorRepository.save(monitor)
+                .map(this::mapToDto)
+                // Doublon de numéro de permis : erreur métier claire (409) au lieu
+                // d'une 500 brute remontant la contrainte SQL.
+                .onErrorResume(org.springframework.dao.DuplicateKeyException.class, e -> Mono.error(
+                        new ResponseStatusException(HttpStatus.CONFLICT,
+                                "Ce numéro de permis est déjà attribué à un autre moniteur")));
+    }
+
+    private static String blankToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     public Flux<MonitorDto> getMonitorsBySchool(UUID schoolId) {
@@ -76,7 +97,14 @@ public class MonitorService {
     }
 
     public Mono<MonitorDto> getMonitorByUserId(UUID userId) {
-        return monitorRepository.findByUserId(userId).map(this::mapToDto);
+        return monitorRepository.findByUserId(userId)
+                .flatMap(monitor -> schoolRepository.findById(monitor.getSchoolId())
+                        .map(school -> {
+                            MonitorDto dto = mapToDto(monitor);
+                            dto.setSchoolName(school.getName());
+                            return dto;
+                        })
+                        .defaultIfEmpty(mapToDto(monitor)));
     }
 
     @Transactional

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Plus, Car, Trash2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks";
@@ -12,8 +13,11 @@ export default function VehiclesPage() {
   const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [formName, setFormName] = useState("");
   const [formPlate, setFormPlate] = useState("");
+
+  useEffect(() => setMounted(true), []);
 
   const loadVehicles = async () => {
     if (!token) return;
@@ -124,10 +128,13 @@ export default function VehiclesPage() {
         </div>
       )}
 
-      {/* Modal création */}
-      {showModal && (
+      {/* Modal création — rendue via un portail sur <body> avec un z-index
+          au-dessus des couches Leaflet (contrôles ~1000) pour ne plus passer
+          derrière la carte. */}
+      {mounted && showModal && createPortal(
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          style={{ zIndex: 3000 }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setShowModal(false)}
         >
           <div
@@ -166,7 +173,8 @@ export default function VehiclesPage() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

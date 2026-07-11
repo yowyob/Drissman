@@ -44,4 +44,7 @@ export const authService = {
 
     upgradeVisitor: (payload: UpgradeVisitorPayload, token: string) =>
         apiClient.post<AuthResponse>("/auth/upgrade-visitor", payload, token),
+
+    changePassword: (userId: string, currentPassword: string, newPassword: string, token: string) =>
+        apiClient.put<void>(`/users/${userId}/password`, { currentPassword, newPassword }, token),
 };

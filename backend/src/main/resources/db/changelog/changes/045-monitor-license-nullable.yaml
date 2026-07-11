@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 045-monitor-license-nullable
+      author: drissman
+      comment: >
+        Le numéro de permis d'un moniteur devient facultatif : on lève la
+        contrainte NOT NULL tout en conservant l'unicité (PostgreSQL autorise
+        plusieurs NULL sous une contrainte unique). Permet de créer plusieurs
+        moniteurs sans permis renseigné.
+      changes:
+        - dropNotNullConstraint:
+            tableName: monitors
+            columnName: license_number
+            columnDataType: varchar(50)

@@ -18,7 +18,8 @@ public class CreateMonitorRequest {
     @NotBlank(message = "Le nom de famille est obligatoire")
     private String lastName;
 
-    @NotBlank(message = "Le numéro de permis/licence est obligatoire")
+    // Optionnel : peut être vide si le permis n'est pas encore renseigné
+    // (stocké NULL en base pour respecter l'unicité sans bloquer la création).
     private String licenseNumber;
 
     @NotBlank(message = "Le numéro de téléphone est obligatoire")

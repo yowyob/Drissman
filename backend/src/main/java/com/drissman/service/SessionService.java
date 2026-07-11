@@ -54,6 +54,11 @@ public class SessionService {
                         .then(Mono.defer(() -> createSession(enrollment, request))));
     }
 
+    /** Toutes les séances de l'école, quel que soit leur statut (planning gérant). */
+    public Flux<SessionDto> getSessionsForSchool(UUID schoolId) {
+        return sessionRepository.findBySchoolId(schoolId).map(this::mapToDto);
+    }
+
     public Flux<SessionDto> getSessionsForEnrollment(UUID schoolId, UUID enrollmentId) {
         return enrollmentRepository.findById(enrollmentId)
                 .filter(enrollment -> schoolId.equals(enrollment.getSchoolId()))

@@ -95,6 +95,16 @@ export default function PlanningPage() {
       .catch((error: any) => toast.error(error.message || "Impossible de charger les moniteurs"));
   }, [token]);
 
+  // Charge toutes les séances déjà programmées de l'école (tous statuts, y
+  // compris VALIDÉES/TERMINÉES) pour qu'elles restent visibles au rechargement.
+  useEffect(() => {
+    if (!token) return;
+    void adminSessionService
+      .bySchool(token)
+      .then((data) => setCreatedSessions(data))
+      .catch(() => { /* aucune séance ou hors ligne */ });
+  }, [token]);
+
   useEffect(() => {
     if (!token || !form.date) {
       setOffers([]);
