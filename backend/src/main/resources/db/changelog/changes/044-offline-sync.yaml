@@ -1,0 +1,54 @@
+databaseChangeLog:
+  - changeSet:
+      id: 044-offline-sync
+      author: drissman
+      comment: >
+        Mode hors ligne : registre d'idempotence des opérations synchronisées
+        (une ligne par opération client, rejouable sans effet de bord) +
+        horodatage de version sur les sessions pour la détection de conflits.
+      changes:
+        - createTable:
+            tableName: sync_operations
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: op_type
+                  type: varchar(40)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: result_status
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: result_message
+                  type: varchar(500)
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: sync_operations
+            indexName: idx_sync_ops_user
+            columns:
+              - column:
+                  name: user_id
+        - addColumn:
+            tableName: sessions
+            columns:
+              - column:
+                  name: updated_at
+                  type: timestamp

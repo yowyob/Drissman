@@ -126,6 +126,7 @@ public class SessionService {
                         .then(enrollmentRepository.findById(session.getEnrollmentId())
                                 .flatMap(enrollment -> {
                                     session.setStatus(Session.SessionStatus.COMPLETED);
+                                    session.setUpdatedAt(java.time.LocalDateTime.now());
                                     if (pedagogicalNotes != null) {
                                         session.setPedagogicalNotes(pedagogicalNotes);
                                     }

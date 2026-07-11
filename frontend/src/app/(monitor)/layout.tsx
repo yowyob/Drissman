@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, LayoutDashboard, CalendarDays, Users, User, LogOut, Car, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { OfflineBar } from "@/components/offline/offline-bar";
 
 const navItems = [
     { name: "Accueil", href: "/monitor", icon: LayoutDashboard },
@@ -115,6 +116,7 @@ export default function MonitorLayout({ children }: { children: React.ReactNode 
                 )}
             </header>
 
+            <OfflineBar />
             <main className="max-w-6xl mx-auto p-6">{children}</main>
 
             {/* Mobile bottom tab bar */}

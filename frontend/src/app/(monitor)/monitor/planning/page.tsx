@@ -7,9 +7,13 @@ import { useAuth } from "@/hooks";
 import { monitorService, type MonitorSessionViewDto } from "@/lib/monitor-service";
 import { WeeklySchedule, getWeekDatesForOffset } from "@/components/planning/weekly-schedule";
 import { toast } from "sonner";
+import { cachedGet } from "@/lib/offline/offline-fetch";
+import { enqueue } from "@/lib/offline/sync";
+import { probeBackend } from "@/lib/offline/network";
 
 export default function MonitorPlanningPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+  const [fromCache, setFromCache] = useState(false);
   const [sessions, setSessions] = useState<MonitorSessionViewDto[]>([]);
   const [weekOffset, setWeekOffset] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -18,8 +22,11 @@ export default function MonitorPlanningPage() {
     if (!token) return;
     setLoading(true);
     try {
-      const data = await monitorService.getMySessions(token);
-      setSessions(data);
+      // Network First avec repli sur le dernier planning synchronise (24 h).
+      const result = await cachedGet(user?.id ?? "anon", "monitor-sessions",
+        () => monitorService.getMySessions(token));
+      setSessions(result.data);
+      setFromCache(result.fromCache);
     } catch (error: any) {
       toast.error(error.message || "Chargement planning impossible");
     } finally {
@@ -39,6 +46,20 @@ export default function MonitorPlanningPage() {
 
   const markCompleted = async (id: string) => {
     if (!token) return;
+    const session = sessions.find((s) => s.sessionId === id);
+    const online = await probeBackend();
+    if (!online) {
+      // Hors ligne : validation locale, envoyee a la reconnexion (idempotente).
+      await enqueue({
+        type: "SESSION_COMPLETE",
+        payload: { sessionId: id, baseStatus: session?.status },
+        userId: user?.id ?? "anon",
+        label: `Validation seance du ${session?.date ?? "?"}`,
+      });
+      setSessions((prev) => prev.map((s) => (s.sessionId === id ? { ...s, status: "COMPLETED" } : s)));
+      toast.info("Seance validee localement — en attente de synchronisation");
+      return;
+    }
     try {
       await monitorService.completeSession(id, undefined, token);
       await loadSessions();
@@ -53,7 +74,10 @@ export default function MonitorPlanningPage() {
       <div>
         <div>
           <h1 className="text-2xl font-black text-snow">Mon Planning</h1>
-          <p className="text-sm text-mist mt-0.5">{weekSessions.length} seance(s) cette semaine</p>
+          <p className="text-sm text-mist mt-0.5">
+            {weekSessions.length} seance(s) cette semaine
+            {fromCache && <span className="ml-2 text-amber-400">· donnees du dernier acces (hors ligne)</span>}
+          </p>
         </div>
       </div>
 

@@ -6,19 +6,21 @@ import { PageTransition } from "@/components/ui/motion";
 import { useAuth } from "@/hooks";
 import { monitorService, type MonitorStudentProgressDto } from "@/lib/monitor-service";
 import { toast } from "sonner";
+import { cachedGet } from "@/lib/offline/offline-fetch";
 
 export default function MonitorStudentsPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [students, setStudents] = useState<MonitorStudentProgressDto[]>([]);
+  const [fromCache, setFromCache] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (!token) return;
-    void monitorService
-      .getMyStudents(token)
-      .then(setStudents)
+    // Network First avec repli sur les eleves deja charges (24 h).
+    void cachedGet(user?.id ?? "anon", "monitor-students", () => monitorService.getMyStudents(token))
+      .then((r) => { setStudents(r.data); setFromCache(r.fromCache); })
       .catch((error: any) => toast.error(error.message || "Chargement des eleves impossible"));
-  }, [token]);
+  }, [token, user?.id]);
 
   const filtered = useMemo(
     () => students.filter((s) => s.studentName.toLowerCase().includes(searchQuery.toLowerCase())),
@@ -30,7 +32,10 @@ export default function MonitorStudentsPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-black text-snow">Mes Eleves</h1>
-          <p className="text-sm text-mist mt-0.5">{students.length} eleve(s) assigne(s)</p>
+          <p className="text-sm text-mist mt-0.5">
+            {students.length} eleve(s) assigne(s)
+            {fromCache && <span className="ml-2 text-amber-400">· donnees du dernier acces (hors ligne)</span>}
+          </p>
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mist/30" />

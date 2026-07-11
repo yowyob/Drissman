@@ -43,11 +43,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const saveSession = useCallback((response: AuthResponse) => {
+        // Changement de compte sur le même appareil : les données hors ligne
+        // de l'utilisateur précédent sont purgées avant d'ouvrir la session.
+        if (user?.id && user.id !== response.user.id) {
+            const previousUserId = user.id;
+            import("@/lib/offline/db")
+                .then(({ offlineDb }) => offlineDb.purgeUser(previousUserId))
+                .catch(() => { /* purge best-effort */ });
+        }
         setToken(response.token);
         setUser(response.user);
         localStorage.setItem(TOKEN_KEY, response.token);
         localStorage.setItem(USER_KEY, JSON.stringify(response.user));
-    }, []);
+    }, [user?.id]);
 
     const login = useCallback(async (payload: LoginPayload): Promise<AuthResponse> => {
         const response = await authService.login(payload);
@@ -71,11 +79,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [token, saveSession]);
 
     const logout = useCallback(() => {
+        const leavingUserId = user?.id;
         setToken(null);
         setUser(null);
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
-    }, []);
+        // Mode hors ligne : purge des données privées (cache métier + file
+        // d'attente IndexedDB) de l'utilisateur qui se déconnecte.
+        if (leavingUserId) {
+            import("@/lib/offline/db")
+                .then(({ offlineDb }) => offlineDb.purgeUser(leavingUserId))
+                .catch(() => { /* purge best-effort */ });
+        }
+    }, [user?.id]);
 
     return (
         <AuthContext.Provider

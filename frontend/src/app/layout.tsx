@@ -5,6 +5,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { SwRegister } from "@/components/pwa/sw-register";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -12,6 +13,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 export const metadata: Metadata = {
   title: "Drissman - Le comparateur d'auto-écoles au Cameroun",
   description: "Trouvez la meilleure auto-école à Yaoundé, Douala et partout au Cameroun.",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
@@ -28,6 +30,7 @@ export default function RootLayout({
           </AuthProvider>
         </ThemeProvider>
         <Toaster />
+        <SwRegister />
       </body>
     </html>
   );

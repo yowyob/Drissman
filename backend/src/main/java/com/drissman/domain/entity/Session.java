@@ -61,6 +61,10 @@ public class Session {
     @Column("created_at")
     private LocalDateTime createdAt;
 
+    /** Version optimiste du mode hors ligne : horodatage de dernière modification. */
+    @Column("updated_at")
+    private LocalDateTime updatedAt;
+
     public enum SessionStatus {
         SCHEDULED,
         CONFIRMED,

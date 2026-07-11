@@ -6,12 +6,14 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks";
 import { monitorService } from "@/lib/monitor-service";
 import { vehicleService, type VehicleDto } from "@/lib/vehicle-service";
+import { cachedGet } from "@/lib/offline/offline-fetch";
+import { enqueue } from "@/lib/offline/sync";
 
 /** Intervalle minimal entre deux envois de position (ms). */
 const SEND_INTERVAL_MS = 10_000;
 
 export default function TrackingPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
   const [sharing, setSharing] = useState(false);
@@ -27,8 +29,11 @@ export default function TrackingPage() {
     if (!token) return;
     (async () => {
       try {
-        const profile = await monitorService.getProfile(token);
-        const fleet = await vehicleService.bySchool(profile.schoolId);
+        // Network First avec repli sur la flotte deja chargee (24 h).
+        const { data: fleet } = await cachedGet(user?.id ?? "anon", "monitor-fleet", async () => {
+          const profile = await monitorService.getProfile(token);
+          return vehicleService.bySchool(profile.schoolId);
+        });
         setVehicles(fleet);
         if (fleet.length === 1) setSelectedId(fleet[0].id);
       } catch {
@@ -76,8 +81,17 @@ export default function TrackingPage() {
             if (err.message && err.message.includes("séance")) {
               setGeoError(err.message);
               stopSharing();
+            } else {
+              // Échec réseau : la position est mémorisée localement puis
+              // synchronisée à la reconnexion (ajout à l'historique, sans
+              // écraser — la garde métier est revalidée côté serveur).
+              void enqueue({
+                type: "VEHICLE_POSITION",
+                payload: { vehicleId: selectedId, latitude: pos.coords.latitude, longitude: pos.coords.longitude },
+                userId: user?.id ?? "anon",
+                label: "Position GPS mémorisée hors ligne",
+              }).then(() => setSentCount((c) => c + 1));
             }
-            /* autre échec réseau : le prochain point réessaiera */
           });
       },
       (err) => {
