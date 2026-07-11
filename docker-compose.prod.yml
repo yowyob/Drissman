@@ -61,6 +61,7 @@ services:
     environment:
       NODE_ENV: "production"
       PORT: "3000"
+      NEXT_PUBLIC_API_URL: "https://drissman.yowyob.com/drisman-api/api"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ >/dev/null 2>&1 || exit 1"]
       interval: 20s
