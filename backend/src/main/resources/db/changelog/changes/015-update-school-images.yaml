@@ -2,6 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: 015-update-school-images
       author: drissman
+      context: dev            # images des écoles de démo — ne concerne que le dev
       changes:
         - update:
             tableName: schools

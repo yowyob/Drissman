@@ -50,7 +50,8 @@ public class KernelAuthService {
                 .subscribe(
                         v -> {
                         },
-                        e -> log.warn("Sync kernel échouée pour {} : {}", user.getEmail(), e.getMessage()));
+                        e -> KernelMirrorLog.fail("user-sync", user.getEmail(), e),
+                        () -> KernelMirrorLog.ok("user-sync", user.getEmail(), "compte-miroir synchronisé"));
     }
 
     /**
@@ -111,7 +112,8 @@ public class KernelAuthService {
     /** Extrait token + id kernel de la réponse, persiste l'id et met le token en cache. */
     private Mono<User> storeSession(User user, KernelResponse response) {
         if (response.getData() == null) {
-            log.warn("Réponse kernel sans data pour {} : {}", user.getEmail(), response.getMessage());
+            KernelMirrorLog.skip("user-sync", user.getEmail(),
+                    "réponse kernel sans data : " + response.getMessage());
             return Mono.just(user);
         }
 
@@ -123,12 +125,12 @@ public class KernelAuthService {
             // Compte-miroir créé mais en attente de vérification email côté kernel.
             // Le token sera obtenu au prochain login une fois l'email vérifié
             // (ou la vérification désactivée pour notre ClientApplication).
-            log.info("Compte-miroir kernel créé pour {} — en attente de vérification email", user.getEmail());
+            KernelMirrorLog.skip("user-sync", user.getEmail(),
+                    "compte-miroir en attente de vérification email (EMAIL_VERIFICATION_REQUIRED)");
         } else {
-            log.warn("Pas d'accessToken kernel pour {} (nextStep={}, status={})",
-                    user.getEmail(),
-                    response.getData().path("nextStep").asText(""),
-                    response.getData().path("status").asText(""));
+            KernelMirrorLog.skip("user-sync", user.getEmail(),
+                    "pas d'accessToken kernel (nextStep=" + response.getData().path("nextStep").asText("")
+                            + ", status=" + response.getData().path("status").asText("") + ")");
         }
 
         String kernelId = response.getData().path("id").asText(null);

@@ -16,6 +16,9 @@ gsap.registerPlugin(ScrollTrigger);
  * - Dynamic shadow that expands on hover (lift effect)
  */
 
+// ⚠️ TÉMOIGNAGES ILLUSTRATIFS (statiques, assumés) — personnages fictifs, pas
+// des avis réels. Contenu vitrine figé. Pour passer au réel : alimenter depuis
+// les avis existants (ReviewService / GET /api/schools/{id}).
 const testimonials = [
     {
         id: 1,

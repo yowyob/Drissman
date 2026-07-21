@@ -187,6 +187,11 @@ export default function StatsVariant2() {
     const students = useCounter(25000);
     const success = useCounter(92);
 
+    // ⚠️ CHIFFRES ILLUSTRATIFS (statiques, assumés) — NE reflètent PAS la base de
+    // données. Contenu vitrine volontairement figé tant qu'il n'existe pas de
+    // modèle de données réel (partenaires / élèves / résultats d'examen).
+    // Pour brancher sur du réel plus tard : exposer GET /api/stats/public et
+    // remplacer `finalValue` par la valeur renvoyée par l'API.
     const stats = [
         {
             icon: Users,
@@ -194,7 +199,7 @@ export default function StatsVariant2() {
             finalValue: 150,
             suffix: "+",
             label: "Partenaires",
-            subtitle: "Auto-écoles de confiance dans toute la France",
+            subtitle: "Auto-écoles de confiance au Cameroun", // (illustratif)
             delay: 0
         },
         {
@@ -203,7 +208,7 @@ export default function StatsVariant2() {
             finalValue: 25000,
             suffix: "",
             label: "Élèves formés",
-            subtitle: "Et des milliers de permis obtenus",
+            subtitle: "Et des milliers de permis obtenus", // (illustratif)
             format: true,
             delay: 0.15
         },
@@ -213,7 +218,7 @@ export default function StatsVariant2() {
             finalValue: 92,
             suffix: "%",
             label: "Taux de réussite",
-            subtitle: "Supérieur à la moyenne nationale",
+            subtitle: "Supérieur à la moyenne nationale", // (illustratif)
             delay: 0.3
         }
     ];

@@ -2,6 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: 013-restore-conduite-pro
       author: drissman
+      context: dev            # données de démo — ne doit PAS s'exécuter en prod
       changes:
         # Pre-cleanup to avoid Duplicate Key Error if 012 failed or school exists
         - sql: "DELETE FROM invoices WHERE booking_id IN (SELECT id FROM bookings WHERE school_id = '22222222-2222-2222-2222-222222222222')"
@@ -67,6 +68,7 @@ databaseChangeLog:
   - changeSet:
       id: 013-delete-test-schools
       author: drissman
+      context: dev            # DESTRUCTIF (supprime les vraies écoles) — jamais en prod
       changes:
         # 3. Delete all schools that are NOT in the demo set (1111, 2222, 3333)
         - delete:

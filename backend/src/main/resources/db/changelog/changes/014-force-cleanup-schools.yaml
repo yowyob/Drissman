@@ -2,6 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: 014-force-cleanup-schools
       author: drissman
+      context: dev            # DESTRUCTIF (supprime les vraies écoles) — jamais en prod
       changes:
         # 1. Delete Invoices linked to these schools (via booking -> school? or invoice -> school?)
         # Since invoices are usually linked to bookings, and bookings to schools, deleting bookings should trigger cascade if setup.

@@ -9,7 +9,9 @@ import com.drissman.service.AdminSchoolService;
 import com.drissman.service.SchoolService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import java.security.Principal;
@@ -43,17 +45,10 @@ public class AdminSchoolController {
 
     @GetMapping("/stats")
     public Mono<PartnerStatsDto> getStats(Principal principal) {
-        // Demo mode: return mock stats if no authenticated user
+        // Plus de "demo mode" : un appel non authentifié est refusé, jamais
+        // servi avec des chiffres fictifs.
         if (principal == null) {
-            log.info("Demo mode: returning mock stats");
-            return Mono.just(PartnerStatsDto.builder()
-                    .revenue("2,450,000 FCFA")
-                    .enrollments(127)
-                    .successRate("94%")
-                    .upcomingLessons(23)
-                    .revenueGrowth(12.0)
-                    .enrollmentGrowth(8)
-                    .build());
+            return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentification requise"));
         }
 
         log.info("Fetching stats for user: {}", principal.getName());

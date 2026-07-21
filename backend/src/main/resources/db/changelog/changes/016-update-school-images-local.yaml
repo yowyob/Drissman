@@ -2,6 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: 016-update-school-images-local
       author: system
+      context: dev            # images des écoles de démo — ne concerne que le dev
       comment: Update school images with locally generated images
       changes:
         - update:

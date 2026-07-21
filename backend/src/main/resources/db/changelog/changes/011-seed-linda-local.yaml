@@ -2,6 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: 011-seed-linda-local
       author: drissman
+      context: dev            # données de démo — ne doit PAS s'exécuter en prod
       changes:
         - insert:
             tableName: users

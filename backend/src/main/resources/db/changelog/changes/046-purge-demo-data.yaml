@@ -1,0 +1,36 @@
+databaseChangeLog:
+  # ==========================================================================
+  #  Purge des données de démo qui ont DÉJÀ été injectées en production par les
+  #  changesets 008/011/013/014 (avant que ceux-ci soient gatés en context:dev).
+  #  Ajouter context:dev ne les "dé-exécute" pas : il faut ce nettoyage explicite.
+  #
+  #  ⚠️ AVANT DE DÉPLOYER : contrôler la base de prod pour être certain qu'aucune
+  #     vraie donnée ne partage ces IDs / emails :
+  #       SELECT id, name, email FROM schools;
+  #       SELECT email, role FROM users;
+  #  Les DELETE sont idempotents (ne cassent rien si les lignes sont absentes).
+  # ==========================================================================
+  - changeSet:
+      id: 046-purge-demo-data
+      author: drissman
+      context: prod
+      comment: Supprime les écoles et comptes de démonstration de la production
+      changes:
+        # --- Dépendances des écoles démo (ordre : enfants avant parents) --------
+        - sql: "DELETE FROM invoices       WHERE school_id IN ('11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222','33333333-3333-3333-3333-333333333333')"
+        - sql: "DELETE FROM reviews        WHERE school_id IN ('11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222','33333333-3333-3333-3333-333333333333')"
+        - sql: "DELETE FROM availabilities WHERE school_id IN ('11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222','33333333-3333-3333-3333-333333333333')"
+        - sql: "DELETE FROM offers         WHERE school_id IN ('11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222','33333333-3333-3333-3333-333333333333')"
+        # Détacher (ne pas supprimer) les comptes rattachés à une école démo.
+        - sql: "UPDATE users SET school_id = NULL WHERE school_id IN ('11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222','33333333-3333-3333-3333-333333333333')"
+        - sql: "DELETE FROM schools WHERE id IN ('11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222','33333333-3333-3333-3333-333333333333')"
+
+  - changeSet:
+      id: 046-purge-demo-users
+      author: drissman
+      context: prod
+      comment: Supprime les comptes de démo (mot de passe 'password123' - risque sécurité)
+      changes:
+        # Comptes clairement fictifs. 'linda@ntsama.cm' est AUSSI un compte démo
+        # mais laissé de côté ici : à décider/supprimer manuellement si inutile.
+        - sql: "DELETE FROM users WHERE email IN ('demo@drissman.cm','admin@excellence.cm')"
