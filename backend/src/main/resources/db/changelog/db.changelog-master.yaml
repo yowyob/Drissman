@@ -95,3 +95,5 @@ databaseChangeLog:
       file: db/changelog/changes/045-monitor-license-nullable.yaml
   - include:
       file: db/changelog/changes/046-purge-demo-data.yaml
+  - include:
+      file: db/changelog/changes/047-add-governance-to-schools.yaml

@@ -1,6 +1,7 @@
 package com.drissman.api.controller;
 
 import com.drissman.api.dto.GlobalStatsDto;
+import com.drissman.api.dto.RejectSchoolRequest;
 import com.drissman.domain.entity.School;
 import com.drissman.service.SuperAdminService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,11 @@ public class SuperAdminController {
     @PutMapping("/schools/{id}/validate")
     public Mono<School> validateSchool(@PathVariable UUID id) {
         return superAdminService.validateSchool(id);
+    }
+
+    @PutMapping("/schools/{id}/reject")
+    public Mono<School> rejectSchool(@PathVariable UUID id, @RequestBody RejectSchoolRequest request) {
+        return superAdminService.rejectSchool(id, request != null ? request.getReason() : null);
     }
 
     @GetMapping("/schools")

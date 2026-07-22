@@ -7,8 +7,11 @@ import com.drissman.domain.entity.Enrollment;
 import com.drissman.domain.entity.Invoice;
 import com.drissman.domain.entity.Offer;
 import com.drissman.domain.repository.*;
+import com.drissman.kernel.KernelGovernanceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -29,16 +32,33 @@ public class SuperAdminService {
     private final EnrollmentRepository enrollmentRepository;
     private final InvoiceRepository invoiceRepository;
     private final OfferRepository offerRepository;
+    private final KernelGovernanceService kernelGovernanceService;
 
+    /** File d'attente : écoles non encore validées (jamais rejetées). */
     public Flux<School> getPendingSchools() {
         return schoolRepository.findAll()
-                .filter(school -> Boolean.FALSE.equals(school.getIsVerified()));
+                .filter(school -> Boolean.FALSE.equals(school.getIsVerified())
+                        && !"REJECTED".equalsIgnoreCase(school.getGovernanceStatus()));
     }
 
+    /** Approbation : école vérifiée + décision miroitée au kernel (best-effort). */
     public Mono<School> validateSchool(UUID schoolId) {
-        return schoolRepository.validateSchool(schoolId)
+        return schoolRepository.applyGovernance(schoolId, true, "APPROVED", null)
                 .then(schoolRepository.findById(schoolId))
-                .switchIfEmpty(Mono.error(new RuntimeException("Auto-école non trouvée")));
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Auto-école non trouvée")))
+                .doOnNext(school -> kernelGovernanceService.mirrorApprovalInBackground(school, null));
+    }
+
+    /** Rejet motivé : école non vérifiée + décision miroitée au kernel (best-effort). */
+    public Mono<School> rejectSchool(UUID schoolId, String reason) {
+        if (reason == null || reason.isBlank()) {
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Un motif de rejet est requis"));
+        }
+        String trimmed = reason.trim();
+        return schoolRepository.applyGovernance(schoolId, false, "REJECTED", trimmed)
+                .then(schoolRepository.findById(schoolId))
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Auto-école non trouvée")))
+                .doOnNext(school -> kernelGovernanceService.mirrorRejectionInBackground(school, trimmed));
     }
 
     public Mono<GlobalStatsDto> getGlobalStats() {

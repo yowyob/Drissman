@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: 047-add-governance-to-schools
+      author: drissman
+      changes:
+        # Statut de gouvernance local (source de vérité), miroité vers le Kernel
+        # (module 03-identity-governance). Null = héritage (PENDING si non vérifié,
+        # APPROVED si is_verified déjà true). Valeurs : PENDING | APPROVED | REJECTED.
+        - addColumn:
+            tableName: schools
+            columns:
+              - column:
+                  name: governance_status
+                  type: varchar(20)
+                  constraints:
+                    nullable: true
+              # Motif de rejet (ou note d'approbation), transmis au Kernel.
+              - column:
+                  name: governance_reason
+                  type: varchar(500)
+                  constraints:
+                    nullable: true

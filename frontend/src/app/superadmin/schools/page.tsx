@@ -3,9 +3,9 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/hooks";
 import { superAdminService, School } from "@/lib/superadmin-service";
-import { 
-    Loader2, CheckCircle2, XCircle, Building2, MapPin, 
-    Search, Globe, Phone, Mail, Star, ShieldCheck, ShieldAlert
+import {
+    Loader2, CheckCircle2, XCircle, Building2, MapPin,
+    Search, Globe, Phone, Mail, Star, ShieldCheck, ShieldAlert, Ban
 } from "lucide-react";
 import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/motion";
 import { toast } from "sonner";
@@ -17,6 +17,8 @@ export default function SuperAdminSchoolsPage() {
     const [actionId, setActionId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "verified">("all");
+    const [rejectTarget, setRejectTarget] = useState<School | null>(null);
+    const [rejectReason, setRejectReason] = useState("");
 
     const fetchSchools = async () => {
         if (!token) return;
@@ -40,8 +42,8 @@ export default function SuperAdminSchoolsPage() {
         try {
             const updated = await superAdminService.toggleSchoolVerification(schoolId, token);
             toast.success(
-                updated.isVerified 
-                    ? `L'auto-école "${name}" a été vérifiée.` 
+                updated.isVerified
+                    ? `L'auto-école "${name}" a été vérifiée.`
                     : `La vérification de "${name}" a été retirée.`
             );
             setSchools(schools.map((s) => s.id === schoolId ? updated : s));
@@ -52,16 +54,54 @@ export default function SuperAdminSchoolsPage() {
         }
     };
 
+    // Approbation : passe par le flux gouvernance (miroité vers le kernel côté backend).
+    const handleValidate = async (school: School) => {
+        if (!token) return;
+        setActionId(school.id);
+        try {
+            const updated = await superAdminService.validateSchool(school.id, token);
+            toast.success(`L'auto-école "${school.name}" a été approuvée.`);
+            setSchools(schools.map((s) => s.id === school.id ? updated : s));
+        } catch (err: any) {
+            toast.error(err.message || "Erreur lors de l'approbation");
+        } finally {
+            setActionId(null);
+        }
+    };
+
+    // Rejet motivé : le motif est obligatoire et transmis au kernel (gouvernance).
+    const confirmReject = async () => {
+        if (!token || !rejectTarget) return;
+        if (!rejectReason.trim()) {
+            toast.error("Un motif de rejet est requis.");
+            return;
+        }
+        setActionId(rejectTarget.id);
+        try {
+            const updated = await superAdminService.rejectSchool(rejectTarget.id, rejectReason.trim(), token);
+            toast.success(`L'auto-école "${rejectTarget.name}" a été rejetée.`);
+            setSchools(schools.map((s) => s.id === rejectTarget.id ? updated : s));
+            setRejectTarget(null);
+            setRejectReason("");
+        } catch (err: any) {
+            toast.error(err.message || "Erreur lors du rejet");
+        } finally {
+            setActionId(null);
+        }
+    };
+
+    const isRejected = (s: School) => s.governanceStatus === "REJECTED";
+
     const filteredSchools = useMemo(() => {
         return schools.filter((school) => {
             const matchesSearch = school.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                 (school.city && school.city.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (school.address && school.address.toLowerCase().includes(searchTerm.toLowerCase()));
             
-            const matchesStatus = 
-                statusFilter === "all" || 
-                (statusFilter === "verified" && school.isVerified) || 
-                (statusFilter === "pending" && !school.isVerified);
+            const matchesStatus =
+                statusFilter === "all" ||
+                (statusFilter === "verified" && school.isVerified) ||
+                (statusFilter === "pending" && !school.isVerified && school.governanceStatus !== "REJECTED");
 
             return matchesSearch && matchesStatus;
         });
@@ -153,12 +193,24 @@ export default function SuperAdminSchoolsPage() {
                                     </p>
                                 </div>
 
+                                {isRejected(school) && school.governanceReason && (
+                                    <p className="mt-4 text-[11px] text-red-400/80 bg-red-500/[0.06] border border-red-500/15 rounded-xl px-3 py-2 leading-relaxed">
+                                        <span className="font-black uppercase tracking-wider">Motif du rejet : </span>
+                                        {school.governanceReason}
+                                    </p>
+                                )}
+
                                 <div className="mt-6 pt-5 border-t border-white/[0.06] flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-2">
                                         {school.isVerified ? (
                                             <span className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black rounded-lg uppercase tracking-wider">
                                                 <ShieldCheck className="h-3 w-3" />
                                                 Vérifié
+                                            </span>
+                                        ) : isRejected(school) ? (
+                                            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] font-black rounded-lg uppercase tracking-wider">
+                                                <Ban className="h-3 w-3" />
+                                                Rejeté
                                             </span>
                                         ) : (
                                             <span className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-black rounded-lg uppercase tracking-wider">
@@ -168,34 +220,114 @@ export default function SuperAdminSchoolsPage() {
                                         )}
                                     </div>
 
-                                    <button
-                                        onClick={() => handleToggleVerification(school.id, school.isVerified, school.name)}
-                                        disabled={actionId === school.id}
-                                        className={`px-4 py-2 font-black rounded-xl text-xs transition-all flex items-center gap-2 border ${
-                                            school.isVerified
-                                                ? "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20"
-                                                : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
-                                        }`}
-                                    >
-                                        {actionId === school.id ? (
-                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                        ) : school.isVerified ? (
-                                            <>
-                                                <XCircle className="h-3.5 w-3.5" />
-                                                Bloquer
-                                            </>
+                                    <div className="flex items-center gap-2">
+                                        {school.isVerified ? (
+                                            <button
+                                                onClick={() => handleToggleVerification(school.id, school.isVerified, school.name)}
+                                                disabled={actionId === school.id}
+                                                className="px-4 py-2 font-black rounded-xl text-xs transition-all flex items-center gap-2 border bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20"
+                                            >
+                                                {actionId === school.id ? (
+                                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                ) : (
+                                                    <>
+                                                        <XCircle className="h-3.5 w-3.5" />
+                                                        Bloquer
+                                                    </>
+                                                )}
+                                            </button>
                                         ) : (
                                             <>
-                                                <CheckCircle2 className="h-3.5 w-3.5" />
-                                                Valider
+                                                {!isRejected(school) && (
+                                                    <button
+                                                        onClick={() => { setRejectTarget(school); setRejectReason(""); }}
+                                                        disabled={actionId === school.id}
+                                                        className="px-4 py-2 font-black rounded-xl text-xs transition-all flex items-center gap-2 border bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20"
+                                                    >
+                                                        <Ban className="h-3.5 w-3.5" />
+                                                        Rejeter
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => handleValidate(school)}
+                                                    disabled={actionId === school.id}
+                                                    className="px-4 py-2 font-black rounded-xl text-xs transition-all flex items-center gap-2 border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
+                                                >
+                                                    {actionId === school.id ? (
+                                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                    ) : (
+                                                        <>
+                                                            <CheckCircle2 className="h-3.5 w-3.5" />
+                                                            {isRejected(school) ? "Reconsidérer" : "Valider"}
+                                                        </>
+                                                    )}
+                                                </button>
                                             </>
                                         )}
-                                    </button>
+                                    </div>
                                 </div>
                             </div>
                         </StaggerItem>
                     ))}
                 </StaggerContainer>
+            )}
+
+            {/* Modal de rejet motivé */}
+            {rejectTarget && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+                    onClick={() => { if (actionId !== rejectTarget.id) setRejectTarget(null); }}
+                >
+                    <div
+                        className="w-full max-w-md bg-[#0d0d12] border border-white/[0.08] rounded-3xl p-6 space-y-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="bg-red-500/10 text-red-400 border border-red-500/20 p-2.5 rounded-2xl">
+                                <Ban className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-snow leading-tight">Rejeter l'auto-école</h3>
+                                <p className="text-xs text-mist/50">{rejectTarget.name}</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-black text-mist/70 uppercase tracking-wider">
+                                Motif du rejet <span className="text-red-400">*</span>
+                            </label>
+                            <textarea
+                                value={rejectReason}
+                                onChange={(e) => setRejectReason(e.target.value)}
+                                rows={3}
+                                placeholder="Ex : documents non conformes, informations manquantes…"
+                                className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] rounded-xl text-sm text-snow placeholder:text-mist/30 focus:outline-none focus:border-red-500/40 focus:bg-white/[0.04] transition-all resize-none"
+                            />
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-1">
+                            <button
+                                onClick={() => setRejectTarget(null)}
+                                disabled={actionId === rejectTarget.id}
+                                className="px-4 py-2 font-black rounded-xl text-xs text-mist hover:bg-white/5 hover:text-snow transition-all"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={confirmReject}
+                                disabled={actionId === rejectTarget.id || !rejectReason.trim()}
+                                className="px-4 py-2 font-black rounded-xl text-xs flex items-center gap-2 border bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                {actionId === rejectTarget.id ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                    <Ban className="h-3.5 w-3.5" />
+                                )}
+                                Confirmer le rejet
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </PageTransition>
     );

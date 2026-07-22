@@ -7,6 +7,8 @@ export interface School {
     city?: string;
     description?: string;
     isVerified: boolean;
+    governanceStatus?: "PENDING" | "APPROVED" | "REJECTED" | null;
+    governanceReason?: string | null;
 }
 
 export interface User {
@@ -63,6 +65,9 @@ export const superAdminService = {
 
     validateSchool: (id: string, token: string) =>
         apiClient.put<School>(`/superadmin/schools/${id}/validate`, undefined, token),
+
+    rejectSchool: (id: string, reason: string, token: string) =>
+        apiClient.put<School>(`/superadmin/schools/${id}/reject`, { reason }, token),
 
     getAllSchools: (token: string) =>
         apiClient.get<School[]>("/superadmin/schools", token),

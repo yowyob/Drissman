@@ -59,6 +59,15 @@ public class School {
     @Builder.Default
     private Boolean isVerified = false;
 
+    /** Statut de gouvernance local (source de vérité) : PENDING | APPROVED | REJECTED.
+     *  Null = héritage (PENDING si non vérifié, APPROVED si is_verified déjà true). */
+    @Column("governance_status")
+    private String governanceStatus;
+
+    /** Motif de rejet (ou note d'approbation), miroité vers le Kernel. */
+    @Column("governance_reason")
+    private String governanceReason;
+
     @Column("is_demo")
     @Builder.Default
     private Boolean isDemo = false;

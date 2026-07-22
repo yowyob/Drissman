@@ -21,6 +21,12 @@ public interface SchoolRepository extends ReactiveCrudRepository<School, UUID> {
     @Query("UPDATE schools SET is_verified = :isVerified WHERE id = :id")
     reactor.core.publisher.Mono<Integer> updateVerificationStatus(java.util.UUID id, boolean isVerified);
 
+    /** Applique une décision de gouvernance (approbation/rejet) en une écriture. */
+    @org.springframework.data.r2dbc.repository.Modifying
+    @Query("UPDATE schools SET is_verified = :verified, governance_status = :status, "
+            + "governance_reason = :reason WHERE id = :id")
+    reactor.core.publisher.Mono<Integer> applyGovernance(UUID id, boolean verified, String status, String reason);
+
     @Query("SELECT * FROM schools ORDER BY created_at DESC LIMIT 10")
     Flux<School> findRecentSchools();
 }
