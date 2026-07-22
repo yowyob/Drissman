@@ -44,6 +44,15 @@ public final class KernelMirrorLog {
     }
 
     /**
+     * Échec best-effort (WARN) avec un détail supplémentaire — typiquement le
+     * corps de la réponse d'erreur du kernel, qui porte la vraie cause (service
+     * non autorisé, marchand absent…) là où le message HTTP ne dit que le statut.
+     */
+    public static void fail(String op, Object ref, Throwable e, String detail) {
+        log.warn("KERNEL_MIRROR op={} ref={} outcome=FAIL error=\"{}\" detail=\"{}\"", op, ref, e.getMessage(), detail);
+    }
+
+    /**
      * Trace basse d'une opération haute fréquence (ex : observations GPS), en
      * DEBUG pour ne pas noyer les logs de production tout en restant activable.
      */

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
@@ -78,12 +79,35 @@ public class KernelPaymentService {
         if (payerReference != null && !payerReference.isBlank()) body.put("payerReference", payerReference);
         if (description != null && !description.isBlank()) body.put("description", description);
         if (callbackUrl != null && !callbackUrl.isBlank()) body.put("callbackUrl", callbackUrl);
-        return kernelClient.post("/api/payments/orders", body).map(this::toOrder);
+        return kernelClient.post("/api/payments/orders", body)
+                .map(this::toOrder)
+                // Observabilité KERNEL_MIRROR : distingue un ordre RÉELLEMENT créé
+                // (outcome=OK avec status/providerRef) d'un rejet kernel (outcome=FAIL
+                // avec le CORPS d'erreur — serviceCode non autorisé, marchand MyCoolPay
+                // absent…). Sans ça, l'échec est avalé et le blocage reste invisible.
+                .doOnNext(o -> KernelMirrorLog.ok("payment.order.create", idempotencyKey,
+                        "provider=" + provider + " method=" + method
+                                + " status=" + o.status() + " providerRef=" + o.providerReference()))
+                .doOnError(e -> KernelMirrorLog.fail("payment.order.create", idempotencyKey, e, errorBody(e)));
     }
 
     /** Rafraîchit le statut de l'ordre auprès du provider. */
     public Mono<PaymentOrder> refreshOrder(String orderId) {
-        return kernelClient.post("/api/payments/orders/" + orderId + "/refresh", Map.of()).map(this::toOrder);
+        return kernelClient.post("/api/payments/orders/" + orderId + "/refresh", Map.of())
+                .map(this::toOrder)
+                .doOnNext(o -> KernelMirrorLog.ok("payment.order.refresh", orderId, "status=" + o.status()))
+                .doOnError(e -> KernelMirrorLog.fail("payment.order.refresh", orderId, e, errorBody(e)));
+    }
+
+    /** Corps de la réponse d'erreur kernel (porte la vraie cause), tronqué. */
+    private static String errorBody(Throwable e) {
+        if (e instanceof WebClientResponseException w) {
+            String body = w.getResponseBodyAsString();
+            if (body != null && !body.isBlank()) {
+                return body.length() > 500 ? body.substring(0, 500) : body;
+            }
+        }
+        return "";
     }
 
     /** Le PaymentOrderResponse peut être encapsulé dans `data` (ApiResponse) ou à la racine. */
