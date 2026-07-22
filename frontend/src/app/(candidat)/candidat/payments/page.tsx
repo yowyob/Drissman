@@ -128,13 +128,13 @@ export default function MyPaymentsPage() {
                                 </div>
                                 <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-white/5">
                                     <p className="text-xs text-mist/40">{st.hint}</p>
-                                    {p.status === "PENDING" && p.method === "CARD" && (
+                                    {p.status === "PENDING" && (p.method === "CARD" || p.method === "MTN_MOMO" || p.method === "ORANGE_MONEY") && (
                                         <button
                                             onClick={() => void handleRefresh(p)}
                                             disabled={refreshingId === p.id}
                                             className="shrink-0 text-xs font-bold text-signal border border-signal/30 bg-signal/10 hover:bg-signal/20 px-3 py-1.5 rounded-lg transition-all disabled:opacity-50"
                                         >
-                                            {refreshingId === p.id ? "Vérification..." : "Payer / Vérifier"}
+                                            {refreshingId === p.id ? "Vérification..." : "Vérifier le paiement"}
                                         </button>
                                     )}
                                 </div>

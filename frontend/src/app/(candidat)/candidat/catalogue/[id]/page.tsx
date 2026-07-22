@@ -189,10 +189,16 @@ export default function CatalogueDetailPage({ params }: PageProps) {
         setPaymentPhone("");
         setSubmitting(false);
 
-        toast.success("Paiement en attente de confirmation.", {
-            description: `Via ${paymentMethod} (${paymentPhone})`,
-            duration: 5000,
-        });
+        const isMobileMoney = paymentMethod === "Orange Money" || paymentMethod === "MTN Mobile Money";
+        toast.success(
+            isMobileMoney ? "Demande de paiement envoyée." : "Paiement en attente de confirmation.",
+            {
+                description: isMobileMoney
+                    ? `Validez la demande ${paymentMethod} sur le ${paymentPhone}, puis suivez le statut dans Mes Paiements.`
+                    : `Via ${paymentMethod} (${paymentPhone})`,
+                duration: 6000,
+            },
+        );
     };
     if (loading) {
         return (
