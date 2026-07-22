@@ -28,6 +28,19 @@ interface MapClientProps {
     zoom?: number;
 }
 
+/**
+ * Une école n'est placée sur la carte que si ses coordonnées sont valides.
+ * Évite un crash Leaflet quand latitude/longitude sont null / NaN / (0,0).
+ */
+function isMappable(school: DrivingSchool): boolean {
+    const c = school.coordinates;
+    return (
+        Array.isArray(c) && c.length === 2 &&
+        Number.isFinite(c[0]) && Number.isFinite(c[1]) &&
+        !(c[0] === 0 && c[1] === 0)
+    );
+}
+
 // Helper to update map view when center changes
 function Recenter({ center, zoom }: { center: [number, number]; zoom: number }) {
     const map = useMap();
@@ -53,7 +66,7 @@ export default function MapClient({ schools, center = [3.8480, 11.5021], zoom = 
 
                 <Recenter center={center} zoom={zoom} />
 
-                {schools.map((school) => (
+                {schools.filter(isMappable).map((school) => (
                     <Marker
                         key={school.id}
                         position={school.coordinates}

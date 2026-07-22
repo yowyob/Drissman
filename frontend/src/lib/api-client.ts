@@ -40,10 +40,17 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
         throw new Error(message);
     }
 
-    // Handle 204 No Content
+    // 204 No Content, ou corps vide (endpoints renvoyant Mono<Void> → 200 sans
+    // body). Éviter response.json() sur un corps vide qui lève
+    // "Unexpected end of JSON input".
     if (response.status === 204) return {} as T;
-
-    return response.json();
+    const text = await response.text();
+    if (!text) return {} as T;
+    try {
+        return JSON.parse(text) as T;
+    } catch {
+        return {} as T;
+    }
 }
 
 export const apiClient = {

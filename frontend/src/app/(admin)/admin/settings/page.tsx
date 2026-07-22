@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks";
-import { Save, Building2, Phone, Mail, MapPin, Globe, Upload, CheckCircle } from "lucide-react";
+import { Save, Building2, Phone, MapPin, Upload, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import Image from "next/image";
 import { apiClient } from "@/lib/api-client";
+import { adminOfferService, backendImageUrl } from "@/lib/admin-offer-service";
 
 export default function SettingsPage() {
     const { user, token } = useAuth();
@@ -20,6 +22,9 @@ export default function SettingsPage() {
     const [email, setEmail] = useState("");
     const [website, setWebsite] = useState("");
     const [description, setDescription] = useState("");
+    const [imageUrl, setImageUrl] = useState<string>("");
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Charge les paramètres réels de l'école depuis le backend.
     useEffect(() => {
@@ -35,9 +40,27 @@ export default function SettingsPage() {
                 setEmail(s.email || "");
                 setWebsite(s.website || "");
                 setDescription(s.description || "");
+                setImageUrl(s.imageUrl || "");
             })
             .catch(() => { /* école pas encore chargée */ });
     }, [user?.schoolId]);
+
+    const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !token) return;
+        if (!file.type.startsWith("image/")) { toast.error("Veuillez sélectionner une image"); return; }
+        setUploading(true);
+        try {
+            const url = await adminOfferService.uploadImage(file, token);
+            setImageUrl(url);
+            toast.success("Image téléchargée — n'oubliez pas d'enregistrer.");
+        } catch {
+            toast.error("Échec de l'upload de l'image");
+        } finally {
+            setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
 
     const handleSave = async () => {
         if (!schoolName.trim()) { toast.error("Le nom de l'auto-école est obligatoire"); return; }
@@ -47,6 +70,7 @@ export default function SettingsPage() {
             // Persistance réelle en base via le backend (PATCH /schools/admin).
             await apiClient.patch("/schools/admin", {
                 name: schoolName, description, address, city, region, phone, email, website,
+                imageUrl: imageUrl || undefined,
             }, token);
             setSaved(true);
             toast.success("Paramètres enregistrés");
@@ -83,9 +107,29 @@ export default function SettingsPage() {
                     </div>
                     <div className="space-y-1.5">
                         <label className="text-xs font-bold text-mist uppercase tracking-wider">Logo / Image</label>
-                        <div className="border-2 border-dashed border-white/10 rounded-xl p-8 text-center hover:border-signal/30 transition-colors cursor-pointer">
-                            <Upload className="h-6 w-6 text-mist/30 mx-auto mb-2" />
-                            <p className="text-xs text-mist/40">Cliquez pour télécharger ou glissez une image</p>
+                        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+                        <div
+                            onClick={() => !uploading && fileInputRef.current?.click()}
+                            className="border-2 border-dashed border-white/10 rounded-xl p-4 text-center hover:border-signal/30 transition-colors cursor-pointer flex flex-col items-center gap-3"
+                        >
+                            {backendImageUrl(imageUrl) ? (
+                                <Image
+                                    src={backendImageUrl(imageUrl) as string}
+                                    alt="Image de l'auto-école"
+                                    width={320}
+                                    height={160}
+                                    unoptimized
+                                    className="rounded-lg object-cover max-h-40 w-auto"
+                                />
+                            ) : null}
+                            {uploading ? (
+                                <p className="text-xs text-mist/40 flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Téléchargement…</p>
+                            ) : (
+                                <div className="py-2">
+                                    <Upload className="h-6 w-6 text-mist/30 mx-auto mb-2" />
+                                    <p className="text-xs text-mist/40">{backendImageUrl(imageUrl) ? "Cliquez pour changer l'image" : "Cliquez pour télécharger une image"}</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

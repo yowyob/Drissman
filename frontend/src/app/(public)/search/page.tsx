@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect, Suspense, useMemo, useCallback } from "react";
+import { useState, useEffect, Suspense, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Menu, X, Map as MapIcon, Loader2, SlidersHorizontal } from "lucide-react";
 import { SchoolCard } from "@/components/search/school-card";
 import { MapWrapper } from "@/components/map/map-wrapper";
 import { SearchFilters } from "@/components/search/search-filters";
-import { useSchools } from "@/hooks";
+import { useSchools, useGeolocation, type GeoCoords } from "@/hooks";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LogoLink } from "@/components/layout/logo";
+import { UserLocationPin } from "@/components/layout/user-location-pin";
 
 interface FilterState {
     city: "Yaoundé" | "Douala" | "Tous";
@@ -17,13 +19,38 @@ interface FilterState {
     permitType: string;
 }
 
+// Villes supportées par le filtre + leur ancrage GPS.
+const CITY_ANCHORS: { name: "Yaoundé" | "Douala"; lat: number; lng: number }[] = [
+    { name: "Yaoundé", lat: 3.848, lng: 11.5021 },
+    { name: "Douala", lat: 4.0511, lng: 9.7679 },
+];
+
+/** Ville supportée la plus proche des coordonnées (rayon 60 km), sinon "Tous". */
+function cityFromCoords(coords: GeoCoords): "Yaoundé" | "Douala" | "Tous" {
+    const km = (b: { lat: number; lng: number }) => {
+        const R = 6371;
+        const dLat = ((b.lat - coords.lat) * Math.PI) / 180;
+        const dLng = ((b.lng - coords.lng) * Math.PI) / 180;
+        const s =
+            Math.sin(dLat / 2) ** 2 +
+            Math.cos((coords.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+        return R * 2 * Math.asin(Math.sqrt(s));
+    };
+    let best: { name: "Yaoundé" | "Douala"; d: number } | null = null;
+    for (const c of CITY_ANCHORS) {
+        const d = km(c);
+        if (!best || d < best.d) best = { name: c.name, d };
+    }
+    return best && best.d <= 60 ? best.name : "Tous";
+}
+
 function SearchPageContent() {
     const searchParams = useSearchParams();
     const cityFromUrl = searchParams.get('city');
 
     // Map user input to valid filter values
     const getValidCity = (input: string | null): "Yaoundé" | "Douala" | "Tous" => {
-        if (!input) return "Yaoundé";
+        if (!input) return "Tous"; // AUCUN filtre ville actif par défaut
         const normalized = input.toLowerCase().trim();
         if (normalized.includes("douala")) return "Douala";
         if (normalized.includes("yaounde") || normalized.includes("yaoundé")) return "Yaoundé";
@@ -36,6 +63,19 @@ function SearchPageContent() {
         ratings: [],
         permitType: "Tous"
     });
+
+    // Position utilisateur : si détectée (et sans ville imposée par l'URL ni
+    // filtre modifié manuellement), on pré-cadre STRICTEMENT sur sa ville.
+    const { coords } = useGeolocation();
+    const filterTouched = useRef(false);
+
+    useEffect(() => {
+        if (cityFromUrl || filterTouched.current || !coords) return;
+        const detected = cityFromCoords(coords);
+        if (detected !== "Tous") {
+            setFilters((f) => ({ ...f, city: detected }));
+        }
+    }, [coords, cityFromUrl]);
 
     const [showMapMobile, setShowMapMobile] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
@@ -74,6 +114,7 @@ function SearchPageContent() {
     }, [schools, filters]);
 
     const handleFilterChange = useCallback((newFilters: FilterState) => {
+        filterTouched.current = true;
         setFilters(newFilters);
     }, []);
 
@@ -86,14 +127,9 @@ function SearchPageContent() {
             {/* Header */}
             <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? "bg-asphalt/90 backdrop-blur-xl shadow-2xl border-b border-white/5" : "bg-asphalt/80 backdrop-blur-md"}`}>
                 <nav className="container-wide flex justify-between items-center py-4">
-                    <Link href="/" className="flex items-center gap-2 group z-50">
-                        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-signal/30 to-signal/10 border border-signal/30 flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(255,193,7,0.3)] transition-all">
-                            <span className="text-signal font-black text-base">D</span>
-                        </div>
-                        <span className="text-xl font-black tracking-tight">
-                            <span className="text-signal">DRISS</span><span className="text-snow">MAN</span>
-                        </span>
-                    </Link>
+                    <div className="z-50">
+                        <LogoLink href="/" className="h-9 w-auto" wordmarkClassName="text-xl" />
+                    </div>
 
                     <div className="hidden md:flex items-center gap-8">
                         <Link href="/search" className="text-sm text-signal font-bold">Auto-écoles</Link>
@@ -140,13 +176,16 @@ function SearchPageContent() {
                             Auto-écoles
                             {filters.city !== "Tous" && <span className="text-signal hidden sm:inline">à {filters.city}</span>}
                         </h1>
-                        {/* Live pulse indicator */}
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
-                            </span>
-                            <p className="text-[10px] text-green-400/80 font-bold uppercase tracking-widest">En temps réel</p>
+                        {/* Live pulse indicator + position détectée */}
+                        <div className="flex items-center gap-3 mt-1">
+                            <div className="flex items-center gap-2">
+                                <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
+                                </span>
+                                <p className="text-[10px] text-green-400/80 font-bold uppercase tracking-widest">En temps réel</p>
+                            </div>
+                            <UserLocationPin />
                         </div>
                     </div>
 

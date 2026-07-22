@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks";
 import { toast } from "sonner";
-import { Loader2, Eye, EyeOff, Mail, Lock, Car } from "lucide-react";
+import { Loader2, Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { LogoLink } from "@/components/layout/logo";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -59,17 +60,9 @@ export default function LoginPage() {
 
             <div className="w-full max-w-md relative z-10">
                 {/* Logo */}
-                <Link href="/" className="flex items-center justify-center gap-3 mb-10 group">
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-signal/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all" />
-                        <div className="relative bg-gradient-to-br from-signal to-amber-400 p-3 rounded-2xl">
-                            <Car className="h-7 w-7 text-asphalt" />
-                        </div>
-                    </div>
-                    <span className="text-2xl font-black text-snow tracking-tight">
-                        DRISS<span className="text-signal">MAN</span>
-                    </span>
-                </Link>
+                <div className="flex justify-center mb-10">
+                    <LogoLink href="/" className="h-11 w-auto" wordmarkClassName="text-2xl" />
+                </div>
 
                 {/* Card */}
                 <div className="bg-white/[0.03] backdrop-blur-xl rounded-3xl border border-white/[0.06] p-8 shadow-2xl">
