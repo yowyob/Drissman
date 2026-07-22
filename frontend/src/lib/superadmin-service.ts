@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api-client";
+import type { DocumentChecklistItem } from "@/lib/school-document-service";
 
 export interface School {
     id: string;
@@ -80,4 +81,16 @@ export const superAdminService = {
 
     toggleUserActive: (id: string, token: string) =>
         apiClient.put<User>(`/superadmin/users/${id}/toggle-active`, undefined, token),
+
+    /** Checklist documentaire d'une école (pour la revue super-admin). */
+    getSchoolDocuments: (schoolId: string, token: string) =>
+        apiClient.get<DocumentChecklistItem[]>(`/superadmin/schools/${schoolId}/documents`, token),
+
+    /** Revue d'une pièce : decision = "APPROVE" | "REJECT". Renvoie la checklist à jour. */
+    reviewDocument: (documentId: string, decision: "APPROVE" | "REJECT", notes: string | undefined, token: string) =>
+        apiClient.put<DocumentChecklistItem[]>(
+            `/superadmin/documents/${documentId}/review`,
+            { decision, notes },
+            token
+        ),
 };

@@ -1,14 +1,22 @@
 package com.drissman.api.controller;
 
+import com.drissman.api.dto.DocumentChecklistItemDto;
 import com.drissman.api.dto.GlobalStatsDto;
 import com.drissman.api.dto.RejectSchoolRequest;
+import com.drissman.api.dto.ReviewDocumentRequest;
 import com.drissman.domain.entity.School;
+import com.drissman.domain.repository.UserRepository;
+import com.drissman.service.SchoolDocumentService;
 import com.drissman.service.SuperAdminService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.security.Principal;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -17,6 +25,8 @@ import java.util.UUID;
 public class SuperAdminController {
 
     private final SuperAdminService superAdminService;
+    private final SchoolDocumentService schoolDocumentService;
+    private final UserRepository userRepository;
 
     @GetMapping("/stats")
     public Mono<GlobalStatsDto> getGlobalStats() {
@@ -36,6 +46,30 @@ public class SuperAdminController {
     @PutMapping("/schools/{id}/reject")
     public Mono<School> rejectSchool(@PathVariable UUID id, @RequestBody RejectSchoolRequest request) {
         return superAdminService.rejectSchool(id, request != null ? request.getReason() : null);
+    }
+
+    /** Pièces justificatives d'une école (checklist) pour la revue super-admin. */
+    @GetMapping("/schools/{id}/documents")
+    public Mono<List<DocumentChecklistItemDto>> getSchoolDocuments(@PathVariable UUID id) {
+        return schoolDocumentService.getChecklist(id);
+    }
+
+    /** Revue d'une pièce : APPROVE/REJECT → statut local + miroir kernel. */
+    @PutMapping("/documents/{documentId}/review")
+    public Mono<List<DocumentChecklistItemDto>> reviewDocument(
+            Principal principal,
+            @PathVariable UUID documentId,
+            @RequestBody ReviewDocumentRequest request) {
+        if (principal == null) {
+            return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentification requise"));
+        }
+        UUID reviewerId = UUID.fromString(principal.getName());
+        return userRepository.findById(reviewerId)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable")))
+                .flatMap(reviewer -> schoolDocumentService.reviewDocument(
+                        reviewer, documentId,
+                        request != null ? request.getDecision() : null,
+                        request != null ? request.getNotes() : null));
     }
 
     @GetMapping("/schools")

@@ -17,8 +17,8 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -102,6 +102,48 @@ public class SchoolDocumentService {
                             })
                             .collect(Collectors.toList());
                 });
+    }
+
+    /**
+     * Revue d'une pièce par le super-admin : fixe le statut local (VERIFIED/REJECTED),
+     * miroite la décision au document-governance kernel (best-effort), et renvoie
+     * la checklist à jour de l'école concernée.
+     */
+    public Mono<List<DocumentChecklistItemDto>> reviewDocument(User reviewer, UUID documentId,
+                                                               String decisionRaw, String notes) {
+        String decision = decisionRaw == null ? "" : decisionRaw.trim().toUpperCase(Locale.ROOT);
+        final String localStatus;
+        final String kernelStatus;
+        if (decision.equals("APPROVE") || decision.equals("APPROVED") || decision.equals("VERIFIED")) {
+            localStatus = SchoolDocument.Status.VERIFIED;
+            kernelStatus = "APPROVED";
+        } else if (decision.equals("REJECT") || decision.equals("REJECTED")) {
+            localStatus = SchoolDocument.Status.REJECTED;
+            kernelStatus = "REJECTED";
+        } else {
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Décision invalide (attendu : APPROVE ou REJECT)"));
+        }
+        String trimmedNotes = notes != null && !notes.isBlank() ? notes.trim() : null;
+
+        return documentRepository.findById(documentId)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Document introuvable")))
+                .flatMap(doc -> {
+                    doc.setStatus(localStatus);
+                    doc.setReviewNotes(trimmedNotes);
+                    doc.setUpdatedAt(LocalDateTime.now());
+                    return documentRepository.save(doc);
+                })
+                .doOnNext(doc -> {
+                    // Miroir Kernel best-effort si la pièce a été rattachée au Document-hub.
+                    if (doc.getKernelDocumentLinkId() != null) {
+                        kernelDocumentService.review(reviewer, doc.getKernelDocumentLinkId(), kernelStatus, trimmedNotes)
+                                .subscribeOn(Schedulers.boundedElastic())
+                                .subscribe(v -> {}, e -> log.debug("Miroir review kernel indisponible pour {} : {}",
+                                        doc.getId(), e.getMessage()));
+                    }
+                })
+                .flatMap(doc -> getChecklist(doc.getSchoolId()));
     }
 
     /** Archive + rattache au Document-hub kernel sans bloquer la réponse au gérant. */

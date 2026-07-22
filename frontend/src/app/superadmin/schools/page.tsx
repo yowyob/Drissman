@@ -3,12 +3,22 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/hooks";
 import { superAdminService, School } from "@/lib/superadmin-service";
+import type { DocumentChecklistItem } from "@/lib/school-document-service";
+import { backendImageUrl } from "@/lib/admin-offer-service";
 import {
     Loader2, CheckCircle2, XCircle, Building2, MapPin,
-    Search, Globe, Phone, Mail, Star, ShieldCheck, ShieldAlert, Ban
+    Search, Globe, Phone, Mail, Star, ShieldCheck, ShieldAlert, Ban,
+    FileText, Clock, FileWarning, ExternalLink, ThumbsUp, ThumbsDown,
 } from "lucide-react";
 import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/motion";
 import { toast } from "sonner";
+
+const DOC_STATUS_META: Record<string, { label: string; cls: string; Icon: any }> = {
+    VERIFIED: { label: "Vérifié", cls: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20", Icon: CheckCircle2 },
+    PENDING: { label: "En attente", cls: "text-amber-400 bg-amber-500/10 border-amber-500/20", Icon: Clock },
+    REJECTED: { label: "Rejeté", cls: "text-red-400 bg-red-500/10 border-red-500/20", Icon: XCircle },
+    MISSING: { label: "Manquant", cls: "text-mist/50 bg-white/[0.03] border-white/[0.08]", Icon: FileWarning },
+};
 
 export default function SuperAdminSchoolsPage() {
     const { token } = useAuth();
@@ -19,6 +29,10 @@ export default function SuperAdminSchoolsPage() {
     const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "verified">("all");
     const [rejectTarget, setRejectTarget] = useState<School | null>(null);
     const [rejectReason, setRejectReason] = useState("");
+    const [docTarget, setDocTarget] = useState<School | null>(null);
+    const [docItems, setDocItems] = useState<DocumentChecklistItem[]>([]);
+    const [docLoading, setDocLoading] = useState(false);
+    const [reviewingId, setReviewingId] = useState<string | null>(null);
 
     const fetchSchools = async () => {
         if (!token) return;
@@ -91,6 +105,36 @@ export default function SuperAdminSchoolsPage() {
     };
 
     const isRejected = (s: School) => s.governanceStatus === "REJECTED";
+
+    // Ouvre la revue documentaire d'une école (charge la checklist).
+    const openDocuments = async (school: School) => {
+        if (!token) return;
+        setDocTarget(school);
+        setDocItems([]);
+        setDocLoading(true);
+        try {
+            setDocItems(await superAdminService.getSchoolDocuments(school.id, token));
+        } catch (err: any) {
+            toast.error(err.message || "Erreur lors du chargement des documents");
+        } finally {
+            setDocLoading(false);
+        }
+    };
+
+    // Approuve ou rejette une pièce ; met à jour la liste renvoyée par le backend.
+    const handleReview = async (documentId: string, decision: "APPROVE" | "REJECT") => {
+        if (!token) return;
+        setReviewingId(documentId);
+        try {
+            const updated = await superAdminService.reviewDocument(documentId, decision, undefined, token);
+            setDocItems(updated);
+            toast.success(decision === "APPROVE" ? "Pièce approuvée." : "Pièce rejetée.");
+        } catch (err: any) {
+            toast.error(err.message || "Erreur lors de la revue");
+        } finally {
+            setReviewingId(null);
+        }
+    };
 
     const filteredSchools = useMemo(() => {
         return schools.filter((school) => {
@@ -221,6 +265,13 @@ export default function SuperAdminSchoolsPage() {
                                     </div>
 
                                     <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => openDocuments(school)}
+                                            className="px-4 py-2 font-black rounded-xl text-xs transition-all flex items-center gap-2 border bg-white/[0.03] text-mist border-white/[0.08] hover:bg-white/[0.06] hover:text-snow"
+                                        >
+                                            <FileText className="h-3.5 w-3.5" />
+                                            Documents
+                                        </button>
                                         {school.isVerified ? (
                                             <button
                                                 onClick={() => handleToggleVerification(school.id, school.isVerified, school.name)}
@@ -324,6 +375,110 @@ export default function SuperAdminSchoolsPage() {
                                     <Ban className="h-3.5 w-3.5" />
                                 )}
                                 Confirmer le rejet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de revue documentaire (KYC) */}
+            {docTarget && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+                    onClick={() => setDocTarget(null)}
+                >
+                    <div
+                        className="w-full max-w-lg max-h-[85vh] overflow-y-auto bg-[#0d0d12] border border-white/[0.08] rounded-3xl p-6 space-y-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="bg-signal/10 text-signal border border-signal/20 p-2.5 rounded-2xl">
+                                <FileText className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0">
+                                <h3 className="text-base font-black text-snow leading-tight truncate">Documents — {docTarget.name}</h3>
+                                <p className="text-xs text-mist/50">Vérification des pièces justificatives</p>
+                            </div>
+                        </div>
+
+                        {docLoading ? (
+                            <div className="py-12 flex justify-center">
+                                <Loader2 className="h-8 w-8 text-signal animate-spin" />
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {docItems.map((item) => {
+                                    const meta = DOC_STATUS_META[item.status] || DOC_STATUS_META.MISSING;
+                                    const fileHref = backendImageUrl(item.fileUrl);
+                                    const busy = reviewingId === item.documentId;
+                                    return (
+                                        <div key={item.category} className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 space-y-3">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-black text-snow leading-tight">{item.label}</p>
+                                                    <span className="text-[10px] font-black uppercase tracking-wider text-mist/40">
+                                                        {item.required ? "Obligatoire" : "Optionnel"}
+                                                    </span>
+                                                </div>
+                                                <span className={`flex items-center gap-1.5 px-2.5 py-1 border text-[10px] font-black rounded-lg uppercase tracking-wider shrink-0 ${meta.cls}`}>
+                                                    <meta.Icon className="h-3 w-3" />
+                                                    {meta.label}
+                                                </span>
+                                            </div>
+
+                                            {item.status === "REJECTED" && item.reviewNotes && (
+                                                <p className="text-[11px] text-red-400/80 bg-red-500/[0.06] border border-red-500/15 rounded-lg px-3 py-1.5">
+                                                    {item.reviewNotes}
+                                                </p>
+                                            )}
+
+                                            {item.documentId ? (
+                                                <div className="flex items-center justify-between gap-3">
+                                                    {fileHref && (
+                                                        <a
+                                                            href={fileHref}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-1.5 text-xs text-mist/70 hover:text-snow transition-colors"
+                                                        >
+                                                            <ExternalLink className="h-3.5 w-3.5" />
+                                                            Voir
+                                                        </a>
+                                                    )}
+                                                    <div className="flex items-center gap-2 ml-auto">
+                                                        <button
+                                                            onClick={() => handleReview(item.documentId!, "REJECT")}
+                                                            disabled={busy || item.status === "REJECTED"}
+                                                            className="px-3 py-1.5 font-black rounded-lg text-xs flex items-center gap-1.5 border bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                                        >
+                                                            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ThumbsDown className="h-3.5 w-3.5" />}
+                                                            Rejeter
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleReview(item.documentId!, "APPROVE")}
+                                                            disabled={busy || item.status === "VERIFIED"}
+                                                            className="px-3 py-1.5 font-black rounded-lg text-xs flex items-center gap-1.5 border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                                        >
+                                                            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ThumbsUp className="h-3.5 w-3.5" />}
+                                                            Approuver
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-xs text-mist/40 italic">Aucune pièce téléversée pour cette catégorie.</p>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        <div className="flex justify-end pt-1">
+                            <button
+                                onClick={() => setDocTarget(null)}
+                                className="px-4 py-2 font-black rounded-xl text-xs text-mist hover:bg-white/5 hover:text-snow transition-all"
+                            >
+                                Fermer
                             </button>
                         </div>
                     </div>
