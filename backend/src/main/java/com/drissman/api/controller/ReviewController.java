@@ -2,6 +2,7 @@ package com.drissman.api.controller;
 
 import com.drissman.api.dto.CreateReviewRequest;
 import com.drissman.api.dto.ReviewDto;
+import com.drissman.api.dto.ReviewEligibilityDto;
 import com.drissman.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,23 @@ public class ReviewController {
     @GetMapping("/school/{schoolId}")
     public Flux<ReviewDto> getBySchool(@PathVariable UUID schoolId) {
         return reviewService.findBySchoolId(schoolId);
+    }
+
+    /**
+     * Éligibilité de l'utilisateur courant à laisser un avis sur cette école.
+     * Public (permitAll) : un visiteur non authentifié reçoit canReview=false.
+     */
+    @GetMapping("/eligibility/{schoolId}")
+    public Mono<ReviewEligibilityDto> eligibility(Principal principal, @PathVariable UUID schoolId) {
+        if (principal == null) {
+            return Mono.just(ReviewEligibilityDto.builder()
+                    .canReview(false)
+                    .hasEnrollment(false)
+                    .alreadyReviewed(false)
+                    .reason("Connectez-vous en tant qu'élève pour laisser un avis.")
+                    .build());
+        }
+        return reviewService.eligibility(UUID.fromString(principal.getName()), schoolId);
     }
 
 }

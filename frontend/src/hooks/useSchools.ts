@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { DrivingSchool, Offer } from "@/lib/data";
 import { publicCatalogService, type PublicSchoolDto } from "@/lib/public-catalog-service";
+import type { GeoCoords } from "@/hooks/useGeolocation";
 
 function mapPermitTypeToOfferType(permitType?: string): Offer["type"] {
   if (permitType === "A") return "Permis A";
@@ -18,6 +19,27 @@ function mapSchoolOfferToUiOffer(offer: PublicSchoolDto["offers"][number]): Offe
     features: [`Permis ${offer.permitType || "B"}`, `${offer.hours || 0}h de formation`],
     imageUrl: offer.imageUrl,
   };
+}
+
+/** Distance en km entre deux points GPS (formule de Haversine). */
+function haversineKm(a: GeoCoords, lat: number, lng: number): number {
+  const R = 6371;
+  const dLat = ((lat - a.lat) * Math.PI) / 180;
+  const dLng = ((lng - a.lng) * Math.PI) / 180;
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((a.lat * Math.PI) / 180) * Math.cos((lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.asin(Math.sqrt(s));
+}
+
+/** Ajoute la distance à l'utilisateur et trie du plus proche au plus loin. */
+function sortByProximity(list: DrivingSchool[], coords: GeoCoords): DrivingSchool[] {
+  return list
+    .map((school) => ({
+      ...school,
+      distanceKm: haversineKm(coords, school.coordinates[0], school.coordinates[1]),
+    }))
+    .sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity));
 }
 
 async function buildUiSchool(school: PublicSchoolDto): Promise<DrivingSchool | null> {
@@ -55,7 +77,7 @@ async function buildUiSchool(school: PublicSchoolDto): Promise<DrivingSchool | n
   };
 }
 
-async function loadApiSchools(city?: string): Promise<DrivingSchool[]> {
+async function loadApiSchools(city?: string, coords?: GeoCoords | null): Promise<DrivingSchool[]> {
   const schools = await publicCatalogService.listSchools();
   const mapped = await Promise.all(
     schools.map(async (school) => {
@@ -68,20 +90,29 @@ async function loadApiSchools(city?: string): Promise<DrivingSchool[]> {
   );
 
   const ready = mapped.filter((school): school is DrivingSchool => school !== null);
-  if (!city) return ready;
-  return ready.filter((school) => school.city === city);
+  const filtered = city ? ready.filter((school) => school.city === city) : ready;
+  // Tri par proximité si la position de l'utilisateur est connue.
+  return coords ? sortByProximity(filtered, coords) : filtered;
 }
 
-export function useSchools(city?: string) {
+export function useSchools(city?: string, coords?: GeoCoords | null) {
   const [schools, setSchools] = useState<DrivingSchool[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // On dépend des primitives lat/lng (et non de l'objet) pour éviter les
+  // recalculs inutiles quand la référence change sans que les coords bougent.
+  const lat = coords?.lat;
+  const lng = coords?.lng;
 
   const fetchSchools = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const remoteSchools = await loadApiSchools(city);
+      const remoteSchools = await loadApiSchools(
+        city,
+        lat != null && lng != null ? { lat, lng } : null,
+      );
       setSchools(remoteSchools);
     } catch {
       // Pas de repli sur des données fictives : on affiche l'erreur réelle.
@@ -90,7 +121,7 @@ export function useSchools(city?: string) {
     } finally {
       setLoading(false);
     }
-  }, [city]);
+  }, [city, lat, lng]);
 
   useEffect(() => {
     void fetchSchools();

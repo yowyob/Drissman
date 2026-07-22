@@ -3,10 +3,10 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Star, Car, MapPin, ArrowRight } from "lucide-react";
+import { Star, Car, MapPin, ArrowRight, Navigation, Loader2 } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useSchools } from "@/hooks";
+import { useSchools, useGeolocation } from "@/hooks";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -31,8 +31,12 @@ function SkeletonCard() {
 
 export default function SelectionPopulaireVariant() {
     const sectionRef = useRef<HTMLDivElement>(null);
-    const { schools, loading } = useSchools();
+    // Géolocalisation demandée dès l'ouverture (avec cache) : on trie les
+    // auto-écoles par proximité si la position est connue.
+    const { coords, status, request } = useGeolocation();
+    const { schools, loading } = useSchools(undefined, coords);
     const router = useRouter();
+    const located = coords != null;
 
     useEffect(() => {
         if (loading || !schools.length) return;
@@ -64,21 +68,48 @@ export default function SelectionPopulaireVariant() {
         ...school,
         minPrice: school.offers?.[0]?.price || 150000,
         badge: school.rating >= 4.7 ? "PREMIUM" : school.rating >= 4.5 ? "POPULAIRE" : "-10%",
-        formattedPrice: new Intl.NumberFormat('fr-FR').format(school.offers?.[0]?.price || 150000).replace(/\u202f/g, ' ')
+        formattedPrice: new Intl.NumberFormat('fr-FR').format(school.offers?.[0]?.price || 150000).replace(/ /g, ' ')
     }));
 
     return (
         <section ref={sectionRef} className="py-24 bg-concrete relative overflow-hidden">
             <div className="container-wide relative z-10">
-                <div className="flex justify-between items-end mb-12">
+                <div className="flex flex-wrap justify-between items-end gap-4 mb-12">
                     <div>
-                        <span className="text-signal text-xs font-bold tracking-[0.15em] uppercase mb-2 block">Nos partenaires</span>
-                        <h2 className="text-3xl font-black">Sélection Populaire</h2>
+                        <span className="text-signal text-xs font-bold tracking-[0.15em] uppercase mb-2 block">
+                            {located ? "Autour de vous" : "Nos partenaires"}
+                        </span>
+                        <h2 className="text-3xl font-black">
+                            {located ? "Auto-écoles proches de vous" : "Sélection Populaire"}
+                        </h2>
                     </div>
-                    <Link href="/search" className="group flex items-center gap-2 text-signal text-sm hover:underline">
-                        TOUT VOIR
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </Link>
+                    <div className="flex items-center gap-3">
+                        {/* Pastille géolocalisation (UX type search.yowyob.com) */}
+                        {status === "prompting" && (
+                            <span className="flex items-center gap-2 text-xs text-mist/70 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Localisation…
+                            </span>
+                        )}
+                        {located && (
+                            <span className="flex items-center gap-1.5 text-xs font-bold text-signal bg-signal/10 border border-signal/20 px-3 py-1.5 rounded-full">
+                                <Navigation className="w-3.5 h-3.5 fill-signal" /> Position activée
+                            </span>
+                        )}
+                        {(status === "denied" || status === "idle" || status === "unsupported") && (
+                            <button
+                                onClick={request}
+                                disabled={status === "unsupported"}
+                                className="flex items-center gap-1.5 text-xs font-bold text-signal border border-signal/30 bg-signal/10 hover:bg-signal/20 px-3 py-1.5 rounded-full transition-all disabled:opacity-40"
+                            >
+                                <Navigation className="w-3.5 h-3.5" />
+                                {status === "unsupported" ? "Géoloc indisponible" : "Activer ma position"}
+                            </button>
+                        )}
+                        <Link href="/search" className="group flex items-center gap-2 text-signal text-sm hover:underline">
+                            TOUT VOIR
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                    </div>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-6">
@@ -97,14 +128,21 @@ export default function SelectionPopulaireVariant() {
                             >
                                 {/* Header avec badge et rating */}
                                 <div className="flex justify-between items-start mb-4">
-                                    <div className="badge-sparkle relative overflow-hidden bg-signal/10 text-signal text-xs font-bold px-2 py-1 rounded">
-                                        {school.badge}
-                                        <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="badge-sparkle relative overflow-hidden bg-signal/10 text-signal text-xs font-bold px-2 py-1 rounded">
+                                            {school.badge}
+                                            <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                                        </div>
+                                        {school.distanceKm != null && (
+                                            <span className="flex items-center gap-1 text-[10px] font-bold text-signal/90 bg-white/5 border border-white/10 px-2 py-1 rounded">
+                                                <Navigation className="w-3 h-3" /> {school.distanceKm.toFixed(1)} km
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <Star className="h-4 w-4 text-signal fill-signal" />
                                         <span className="text-sm font-bold text-white">{school.rating}</span>
-                                        <span className="text-xs text-mist/60">(25+)</span>
+                                        <span className="text-xs text-mist/60">({school.reviewCount})</span>
                                     </div>
                                 </div>
 

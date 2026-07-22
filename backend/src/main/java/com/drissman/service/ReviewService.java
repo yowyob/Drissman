@@ -2,6 +2,7 @@ package com.drissman.service;
 
 import com.drissman.api.dto.CreateReviewRequest;
 import com.drissman.api.dto.ReviewDto;
+import com.drissman.api.dto.ReviewEligibilityDto;
 import com.drissman.domain.entity.Enrollment;
 import com.drissman.domain.entity.Review;
 import com.drissman.domain.repository.EnrollmentRepository;
@@ -86,6 +87,43 @@ public class ReviewService {
         public Flux<ReviewDto> findBySchoolId(UUID schoolId) {
                 return reviewRepository.findBySchoolId(schoolId)
                                 .flatMap(this::enrichWithUserName);
+        }
+
+        /**
+         * Éligibilité de l'utilisateur à laisser un avis : il faut une inscription
+         * ACTIVE ou COMPLETED dans cette auto-école et ne pas avoir déjà commenté.
+         * Miroir exact des règles appliquées par {@link #create}, exposé au front
+         * pour conditionner l'affichage du formulaire.
+         */
+        public Mono<ReviewEligibilityDto> eligibility(UUID userId, UUID schoolId) {
+                return enrollmentRepository.findByUserId(userId)
+                                .collectList()
+                                .flatMap(enrollments -> {
+                                        boolean hasEnrollment = enrollments.stream()
+                                                        .anyMatch(e -> schoolId.equals(e.getSchoolId())
+                                                                        && (e.getStatus() == Enrollment.EnrollmentStatus.ACTIVE
+                                                                                        || e.getStatus() == Enrollment.EnrollmentStatus.COMPLETED));
+                                        if (!hasEnrollment) {
+                                                return Mono.just(ReviewEligibilityDto.builder()
+                                                                .canReview(false)
+                                                                .hasEnrollment(false)
+                                                                .alreadyReviewed(false)
+                                                                .reason("Réservé aux élèves inscrits (formation en cours ou validée) dans cette auto-école.")
+                                                                .build());
+                                        }
+                                        return reviewRepository.findByUserIdAndSchoolId(userId, schoolId)
+                                                        .map(existing -> ReviewEligibilityDto.builder()
+                                                                        .canReview(false)
+                                                                        .hasEnrollment(true)
+                                                                        .alreadyReviewed(true)
+                                                                        .reason("Vous avez déjà laissé un avis pour cette auto-école.")
+                                                                        .build())
+                                                        .defaultIfEmpty(ReviewEligibilityDto.builder()
+                                                                        .canReview(true)
+                                                                        .hasEnrollment(true)
+                                                                        .alreadyReviewed(false)
+                                                                        .build());
+                                });
         }
 
         public Mono<ReviewDto> verifyReview(UUID reviewId) {

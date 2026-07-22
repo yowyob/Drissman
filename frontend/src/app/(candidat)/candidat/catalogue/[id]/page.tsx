@@ -1,13 +1,14 @@
 ﻿"use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useCallback } from "react";
 import { useSchool, useAuth } from "@/hooks";
-import { Star, MapPin, ArrowLeft, Car, ShieldCheck, Check, Loader2, Phone, X } from "lucide-react";
+import { Star, MapPin, ArrowLeft, Car, ShieldCheck, Check, Loader2, Phone, X, MessageSquare, Send, Lock } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { PageTransition } from "@/components/ui/motion";
 import { enrollmentService, EnrollmentDto } from "@/lib/enrollment-service";
 import { paymentService } from "@/lib/payment-service";
+import { reviewService, type ReviewDto, type ReviewEligibility } from "@/lib/review-service";
 import { backendImageUrl } from "@/lib/admin-offer-service";
 
 interface Enrollment {
@@ -42,14 +43,6 @@ interface SchoolOffer {
     modules?: Array<{ id: string; name: string; category: string; requiredHours: number }>;
 }
 
-interface SchoolReview {
-    id: string;
-    user: string;
-    rating: number;
-    date: string;
-    comment: string;
-}
-
 interface PageProps { params: Promise<{ id: string }> }
 
 export default function CatalogueDetailPage({ params }: PageProps) {
@@ -61,6 +54,51 @@ export default function CatalogueDetailPage({ params }: PageProps) {
     const [paymentMethod, setPaymentMethod] = useState<string>("");
     const [paymentPhone, setPaymentPhone] = useState("");
     const [submitting, setSubmitting] = useState(false);
+
+    // --- Avis (chargés depuis l'API) + éligibilité (formulaire conditionné) ---
+    const [reviews, setReviews] = useState<ReviewDto[]>([]);
+    const [eligibility, setEligibility] = useState<ReviewEligibility | null>(null);
+    const [reviewRating, setReviewRating] = useState(0);
+    const [reviewComment, setReviewComment] = useState("");
+    const [submittingReview, setSubmittingReview] = useState(false);
+
+    const loadReviews = useCallback(async () => {
+        try {
+            setReviews((await reviewService.getForSchool(id)) || []);
+        } catch {
+            /* liste d'avis indisponible : on n'affiche rien de bloquant */
+        }
+    }, [id]);
+
+    useEffect(() => { void loadReviews(); }, [loadReviews]);
+
+    useEffect(() => {
+        if (!token) { setEligibility(null); return; }
+        (async () => {
+            try {
+                setEligibility(await reviewService.getEligibility(id, token));
+            } catch {
+                setEligibility(null);
+            }
+        })();
+    }, [id, token]);
+
+    const handleSubmitReview = async () => {
+        if (!token || reviewRating < 1) return;
+        setSubmittingReview(true);
+        try {
+            await reviewService.create(id, reviewRating, reviewComment.trim(), token);
+            toast.success("Merci ! Votre avis a été publié.");
+            setReviewRating(0);
+            setReviewComment("");
+            await loadReviews();
+            setEligibility(await reviewService.getEligibility(id, token));
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Impossible d'envoyer l'avis");
+        } finally {
+            setSubmittingReview(false);
+        }
+    };
 
     useEffect(() => {
         let cancelled = false;
@@ -269,21 +307,63 @@ export default function CatalogueDetailPage({ params }: PageProps) {
                 </div>
             )}
 
-            {/* Reviews */}
-            {school.reviews && school.reviews.length > 0 && (
-                <div>
-                    <h2 className="text-xl font-black text-snow mb-4">Avis des élèves</h2>
+            {/* Avis — chargés depuis l'API + formulaire conditionné à l'inscription */}
+            <div>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-black text-snow">Avis des élèves</h2>
+                    {reviews.length > 0 && <span className="text-xs text-mist/50">{reviews.length} avis</span>}
+                </div>
+
+                {/* Dépôt d'avis : visible UNIQUEMENT si élève inscrit (en cours/validé) et pas déjà commenté */}
+                {eligibility?.canReview ? (
+                    <div className="bg-white/[0.03] rounded-2xl border border-signal/15 p-5 mb-4">
+                        <p className="text-sm font-bold text-snow mb-3 flex items-center gap-2">
+                            <MessageSquare className="h-4 w-4 text-signal" /> Laisser un avis
+                        </p>
+                        <div className="flex items-center gap-1 mb-3">
+                            {[1, 2, 3, 4, 5].map((n) => (
+                                <button key={n} type="button" onClick={() => setReviewRating(n)}
+                                    className="p-0.5 transition-transform hover:scale-110" aria-label={`${n} étoile(s)`}>
+                                    <Star className={`h-6 w-6 ${n <= reviewRating ? "text-signal fill-signal" : "text-white/15"}`} />
+                                </button>
+                            ))}
+                        </div>
+                        <textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)}
+                            placeholder="Partagez votre expérience avec cette auto-école…" rows={3}
+                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-snow text-sm placeholder:text-mist/30 focus:border-signal/30 focus:outline-none transition-all resize-none" />
+                        <div className="flex justify-end mt-3">
+                            <button onClick={handleSubmitReview} disabled={reviewRating < 1 || submittingReview}
+                                className="flex items-center gap-2 text-sm font-bold text-asphalt bg-signal px-5 py-2.5 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed hover:bg-signal/80 transition-all">
+                                {submittingReview ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                Publier mon avis
+                            </button>
+                        </div>
+                    </div>
+                ) : eligibility && eligibility.reason ? (
+                    <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] p-4 mb-4 flex items-center gap-2.5">
+                        <Lock className="h-4 w-4 text-mist/40 shrink-0" />
+                        <p className="text-xs text-mist/50">{eligibility.reason}</p>
+                    </div>
+                ) : null}
+
+                {/* Liste des avis */}
+                {reviews.length === 0 ? (
+                    <p className="text-sm text-mist/40">Aucun avis pour le moment.</p>
+                ) : (
                     <div className="space-y-3">
-                        {school.reviews.map((review: SchoolReview) => (
+                        {reviews.map((review) => (
                             <div key={review.id} className="bg-white/[0.03] rounded-2xl border border-white/[0.06] p-4">
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
                                         <div className="h-8 w-8 rounded-xl bg-signal/20 flex items-center justify-center text-signal font-bold text-xs">
-                                            {review.user.charAt(0)}
+                                            {review.userName?.charAt(0) || "?"}
                                         </div>
                                         <div>
-                                            <p className="text-sm font-bold text-snow">{review.user}</p>
-                                            <p className="text-[10px] text-mist/30">{review.date}</p>
+                                            <p className="text-sm font-bold text-snow flex items-center gap-1.5">
+                                                {review.userName}
+                                                {review.verified && <ShieldCheck className="h-3 w-3 text-green-400" />}
+                                            </p>
+                                            <p className="text-[10px] text-mist/30">{new Date(review.createdAt).toLocaleDateString("fr-FR")}</p>
                                         </div>
                                     </div>
                                     <div className="flex gap-0.5">
@@ -292,12 +372,12 @@ export default function CatalogueDetailPage({ params }: PageProps) {
                                         ))}
                                     </div>
                                 </div>
-                                <p className="text-xs text-mist/60">{review.comment}</p>
+                                {review.comment && <p className="text-xs text-mist/60">{review.comment}</p>}
                             </div>
                         ))}
                     </div>
-                </div>
-            )}
+                )}
+            </div>
 
             {/* Payment Modal */}
             {paymentModal && (

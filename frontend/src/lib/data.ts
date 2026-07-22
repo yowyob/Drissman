@@ -44,6 +44,9 @@ export interface DrivingSchool {
     offers?: Offer[];
     reviews?: Review[];
     instructors?: Instructor[];
+
+    /** Distance (km) par rapport à l'utilisateur, si la géolocalisation est active. */
+    distanceKm?: number;
 }
 
 // NB : ce fichier ne fournit que des TYPES partagés (DrivingSchool, Offer,

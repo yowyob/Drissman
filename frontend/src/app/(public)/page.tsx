@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LogoLink } from "@/components/layout/logo";
 import Hero from "./components/Hero";
 import StatsVariant2 from "./components/StatsVariant2";
 import WorkflowVariant from "./components/WorkflowVariant";
@@ -29,14 +30,9 @@ export default function Home() {
             <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? "bg-asphalt/90 backdrop-blur-xl shadow-2xl border-b border-white/5" : "bg-transparent"}`}>
                 <nav className="container-wide flex justify-between items-center py-4">
                     {/* Logo with Glassmorphism */}
-                    <Link href="/" className="flex items-center gap-2 group z-50">
-                        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-signal/30 to-signal/10 backdrop-blur-sm border border-signal/30 flex items-center justify-center group-hover:border-signal/60 group-hover:shadow-[0_0_20px_rgba(255,193,7,0.3)] transition-all duration-300">
-                            <span className="text-signal font-black text-base">D</span>
-                        </div>
-                        <span className="text-xl font-black tracking-tight">
-                            <span className="text-signal">DRISS</span><span className="text-snow">MAN</span>
-                        </span>
-                    </Link>
+                    <div className="z-50">
+                        <LogoLink href="/" className="h-9 w-auto" wordmarkClassName="text-xl" />
+                    </div>
 
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center gap-8">
