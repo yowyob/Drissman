@@ -9,6 +9,7 @@ import com.drissman.domain.repository.InvoiceRepository;
 import com.drissman.domain.repository.OfferRepository;
 import com.drissman.domain.repository.UserRepository;
 import com.drissman.kernel.KernelAccountingService;
+import com.drissman.kernel.KernelNotificationService;
 import com.drissman.kernel.KernelPaymentService;
 import com.drissman.payment.YowyobPaymentClient;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,7 @@ public class PaymentService {
     private final YowyobPaymentClient yowyobPaymentClient;
     private final KernelPaymentService kernelPaymentService;
     private final KernelAccountingService kernelAccountingService;
+    private final KernelNotificationService kernelNotificationService;
 
     public Mono<PaymentDto> initiate(UUID userId, InitiatePaymentRequest request) {
         Invoice.PaymentMethod method;
@@ -300,7 +302,8 @@ public class PaymentService {
         invoice.setPaidAt(LocalDateTime.now());
         return invoiceRepository.save(invoice)
                 .flatMap(saved -> activateEnrollment(saved).thenReturn(saved))
-                .doOnNext(kernelAccountingService::reflectPaidInvoiceInBackground);
+                .doOnNext(kernelAccountingService::reflectPaidInvoiceInBackground)
+                .doOnNext(kernelNotificationService::notifyPaymentConfirmedInBackground);
     }
 
     private Mono<Void> activateEnrollment(Invoice invoice) {

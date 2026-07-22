@@ -9,6 +9,7 @@ import com.drissman.domain.repository.EnrollmentRepository;
 import com.drissman.domain.repository.OfferRepository;
 import com.drissman.domain.repository.SchoolRepository;
 import com.drissman.domain.repository.UserRepository;
+import com.drissman.kernel.KernelNotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class EnrollmentAppService {
     private final UserRepository userRepository;
     private final SchoolRepository schoolRepository;
     private final PaymentService paymentService;
+    private final KernelNotificationService kernelNotificationService;
 
     public Mono<EnrollmentViewDto> createEnrollment(UUID userId, UUID offerId) {
         Mono<User> userMono = userRepository.findById(userId)
@@ -74,6 +76,9 @@ public class EnrollmentAppService {
                                             .build();
 
                                     return enrollmentRepository.save(enrollment)
+                                            // Notification native kernel (best-effort) : accusé de réception.
+                                            .doOnNext(e -> kernelNotificationService
+                                                    .notifyEnrollmentCreatedInBackground(savedUser, offer))
                                             .flatMap(this::toViewDto);
                                 });
                             });

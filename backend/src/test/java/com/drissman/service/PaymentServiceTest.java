@@ -51,6 +51,9 @@ class PaymentServiceTest {
         @Mock
         private com.drissman.kernel.KernelAccountingService kernelAccountingService;
 
+        @Mock
+        private com.drissman.kernel.KernelNotificationService kernelNotificationService;
+
         @InjectMocks
         private PaymentService paymentService;
 
