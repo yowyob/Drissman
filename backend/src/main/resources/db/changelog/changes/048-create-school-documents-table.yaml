@@ -1,0 +1,66 @@
+databaseChangeLog:
+  - changeSet:
+      id: 048-create-school-documents-table
+      author: drissman
+      changes:
+        # Pièces justificatives d'une auto-école (KYC / Document-hub kernel).
+        # Le fichier est stocké localement (file_url) ET archivé dans le
+        # file-core kernel (kernel_file_id) puis rattaché au Document-hub
+        # (kernel_document_link_id). Statut local = source de vérité affichée.
+        - createTable:
+            tableName: school_documents
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: school_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_school_documents_school
+                    references: schools(id)
+              # Catégorie : BUSINESS_LICENSE | TRADE_REGISTER | OWNER_ID | TAX_CLEARANCE
+              - column:
+                  name: category
+                  type: VARCHAR(40)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: label
+                  type: VARCHAR(255)
+              # URL locale servie par l'app (/api/images/{filename}).
+              - column:
+                  name: file_url
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              # Références kernel (best-effort, null si non miroité).
+              - column:
+                  name: kernel_file_id
+                  type: UUID
+              - column:
+                  name: kernel_document_link_id
+                  type: UUID
+              # Statut local : PENDING | VERIFIED | REJECTED
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: PENDING
+                  constraints:
+                    nullable: false
+              - column:
+                  name: review_notes
+                  type: VARCHAR(500)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP

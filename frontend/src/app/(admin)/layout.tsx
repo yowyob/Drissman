@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import {
     Loader2, LayoutDashboard, BookOpen, Layers, Users2,
-    CalendarDays, CalendarClock, GraduationCap, Receipt, Car,
+    CalendarDays, CalendarClock, GraduationCap, Receipt, Car, FileCheck,
 } from "lucide-react";
 import { DashboardShell, type DashboardNavGroup } from "@/components/layout/dashboard-shell";
 
@@ -40,6 +40,12 @@ const navGroups: DashboardNavGroup[] = [
         label: "Finance",
         items: [
             { name: "Factures", href: "/admin/invoices", icon: Receipt },
+        ],
+    },
+    {
+        label: "Conformité",
+        items: [
+            { name: "Documents", href: "/admin/documents", icon: FileCheck },
         ],
     },
 ];
