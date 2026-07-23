@@ -25,6 +25,16 @@ export interface User {
     createdAt?: string;
 }
 
+export interface SchoolMonitor {
+    id: string;
+    schoolId: string;
+    firstName: string;
+    lastName: string;
+    licenseNumber?: string;
+    phoneNumber?: string;
+    status?: "ACTIVE" | "INACTIVE" | "ON_LEAVE";
+}
+
 export interface MonthlyRevenue {
     month: string;
     revenue: number;
@@ -85,6 +95,14 @@ export const superAdminService = {
     /** Checklist documentaire d'une école (pour la revue super-admin). */
     getSchoolDocuments: (schoolId: string, token: string) =>
         apiClient.get<DocumentChecklistItem[]>(`/superadmin/schools/${schoolId}/documents`, token),
+
+    /** Moniteurs d'une école (pour accéder à leur revue documentaire). */
+    getSchoolMonitors: (schoolId: string, token: string) =>
+        apiClient.get<SchoolMonitor[]>(`/superadmin/schools/${schoolId}/monitors`, token),
+
+    /** Checklist documentaire d'un moniteur. */
+    getMonitorDocuments: (monitorId: string, token: string) =>
+        apiClient.get<DocumentChecklistItem[]>(`/superadmin/monitors/${monitorId}/documents`, token),
 
     /** Revue d'une pièce : decision = "APPROVE" | "REJECT". Renvoie la checklist à jour. */
     reviewDocument: (documentId: string, decision: "APPROVE" | "REJECT", notes: string | undefined, token: string) =>

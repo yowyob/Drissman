@@ -6,11 +6,12 @@ import {
     schoolDocumentService,
     DocumentChecklistItem,
     DocumentStatus,
+    KernelIntegrationStatus,
 } from "@/lib/school-document-service";
 import { backendImageUrl } from "@/lib/admin-offer-service";
 import {
     Loader2, FileCheck, Upload, CheckCircle2, Clock, XCircle,
-    FileWarning, ExternalLink,
+    FileWarning, ExternalLink, Cloud, CloudOff,
 } from "lucide-react";
 import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/motion";
 import { toast } from "sonner";

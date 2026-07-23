@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: 049-add-monitor-to-school-documents
+      author: drissman
+      changes:
+        # Les pièces justificatives d'un MONITEUR réutilisent la table existante :
+        # school_id = école de rattachement (toujours renseigné),
+        # monitor_id = moniteur concerné (NULL pour une pièce de l'école elle-même).
+        # Additif : aucune donnée existante impactée.
+        - addColumn:
+            tableName: school_documents
+            columns:
+              - column:
+                  name: monitor_id
+                  type: UUID
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_school_documents_monitor
+                    references: monitors(id)

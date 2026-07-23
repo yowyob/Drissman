@@ -54,6 +54,18 @@ public class SuperAdminController {
         return schoolDocumentService.getChecklist(id);
     }
 
+    /** Moniteurs d'une école, pour accéder à leur revue documentaire. */
+    @GetMapping("/schools/{schoolId}/monitors")
+    public Flux<com.drissman.api.dto.MonitorDto> getSchoolMonitors(@PathVariable UUID schoolId) {
+        return superAdminService.getSchoolMonitors(schoolId);
+    }
+
+    /** Pièces justificatives d'un moniteur (checklist) pour la revue super-admin. */
+    @GetMapping("/monitors/{monitorId}/documents")
+    public Mono<List<DocumentChecklistItemDto>> getMonitorDocuments(@PathVariable UUID monitorId) {
+        return schoolDocumentService.getMonitorChecklist(monitorId);
+    }
+
     /** Revue d'une pièce : APPROVE/REJECT → statut local + miroir kernel. */
     @PutMapping("/documents/{documentId}/review")
     public Mono<List<DocumentChecklistItemDto>> reviewDocument(

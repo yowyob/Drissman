@@ -31,6 +31,10 @@ public class SchoolDocument {
     @Column("school_id")
     private UUID schoolId;
 
+    /** Moniteur concerné ; NULL = pièce de l'auto-école elle-même. */
+    @Column("monitor_id")
+    private UUID monitorId;
+
     private String category;
 
     private String label;

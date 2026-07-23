@@ -9,4 +9,7 @@ import java.util.UUID;
 public interface SchoolDocumentRepository extends ReactiveCrudRepository<SchoolDocument, UUID> {
 
     Flux<SchoolDocument> findBySchoolId(UUID schoolId);
+
+    /** Pièces d'un moniteur donné. */
+    Flux<SchoolDocument> findByMonitorId(UUID monitorId);
 }

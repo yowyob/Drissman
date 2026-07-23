@@ -1,10 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, Trash2, UserX, Eye, EyeOff, Copy, CheckCircle } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Plus, Search, Trash2, UserX, Eye, EyeOff, Copy, CheckCircle,
+  FileCheck, Upload, Loader2, Clock, XCircle, FileWarning, ExternalLink,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks";
 import { adminMonitorService, type AdminMonitorDto } from "@/lib/admin-monitor-service";
+import { schoolDocumentService, type DocumentChecklistItem, type DocumentStatus } from "@/lib/school-document-service";
+import { backendImageUrl } from "@/lib/admin-offer-service";
+
+const DOC_STATUS_META: Record<DocumentStatus, { label: string; cls: string; Icon: any }> = {
+  VERIFIED: { label: "Vérifié", cls: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20", Icon: CheckCircle },
+  PENDING: { label: "En vérification", cls: "text-amber-400 bg-amber-500/10 border-amber-500/20", Icon: Clock },
+  REJECTED: { label: "Rejeté", cls: "text-red-400 bg-red-500/10 border-red-500/20", Icon: XCircle },
+  MISSING: { label: "Manquant", cls: "text-mist/50 bg-white/[0.03] border-white/[0.08]", Icon: FileWarning },
+};
 
 export default function MonitorsPage() {
   const { token } = useAuth();
@@ -15,6 +27,12 @@ export default function MonitorsPage() {
   const [showCreated, setShowCreated] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [createdCredentials, setCreatedCredentials] = useState({ email: "", password: "" });
+  // Pièces justificatives du moniteur (déposées par le gérant, validées par le super-admin)
+  const [docTarget, setDocTarget] = useState<AdminMonitorDto | null>(null);
+  const [docItems, setDocItems] = useState<DocumentChecklistItem[]>([]);
+  const [docLoading, setDocLoading] = useState(false);
+  const [uploadingCat, setUploadingCat] = useState<string | null>(null);
+  const docInputsRef = useRef<Record<string, HTMLInputElement | null>>({});
 
   const [formFirstName, setFormFirstName] = useState("");
   const [formLastName, setFormLastName] = useState("");
@@ -108,6 +126,34 @@ export default function MonitorsPage() {
     }
   };
 
+  // Ouvre la checklist documentaire d'un moniteur.
+  const openDocuments = async (mon: AdminMonitorDto) => {
+    if (!token) return;
+    setDocTarget(mon);
+    setDocItems([]);
+    setDocLoading(true);
+    try {
+      setDocItems(await schoolDocumentService.getMonitorChecklist(mon.id, token));
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors du chargement des documents");
+    } finally {
+      setDocLoading(false);
+    }
+  };
+
+  const handleDocFile = async (category: string, file: File | undefined) => {
+    if (!token || !file || !docTarget) return;
+    setUploadingCat(category);
+    try {
+      setDocItems(await schoolDocumentService.uploadMonitorDocument(docTarget.id, file, category, token));
+      toast.success("Document téléversé. En attente de vérification.");
+    } catch (err: any) {
+      toast.error(err.message || "Échec du téléversement");
+    } finally {
+      setUploadingCat(null);
+    }
+  };
+
   const copyToClipboard = (text: string) => {
     void navigator.clipboard.writeText(text);
     toast.success("Copie");
@@ -159,7 +205,14 @@ export default function MonitorsPage() {
               </h3>
               <p className="text-xs text-mist/50 mt-1">Licence: {mon.licenseNumber}</p>
               <p className="text-xs text-mist/50">Telephone: {mon.phoneNumber}</p>
-              <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-end">
+              <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between gap-2">
+                <button
+                  onClick={() => void openDocuments(mon)}
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 border bg-white/[0.03] text-mist border-white/[0.08] hover:bg-white/[0.06] hover:text-snow transition-all"
+                >
+                  <FileCheck className="h-3.5 w-3.5" />
+                  Documents
+                </button>
                 <button
                   onClick={() => void handleDelete(mon.id)}
                   className="p-1.5 rounded-lg hover:bg-red-500/10 text-mist hover:text-red-400 transition-all"
@@ -246,6 +299,106 @@ export default function MonitorsPage() {
             <button onClick={() => setShowCreated(false)} className="w-full py-3 rounded-xl bg-gradient-to-r from-signal to-amber-400 text-asphalt text-sm font-black">
               Fermer
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Pièces justificatives du moniteur — dépôt par le gérant */}
+      {docTarget && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setDocTarget(null)}
+        >
+          <div
+            className="w-full max-w-lg max-h-[85vh] overflow-y-auto bg-[#0d0d12] border border-white/[0.08] rounded-3xl p-6 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <div className="bg-signal/10 text-signal border border-signal/20 p-2.5 rounded-2xl">
+                <FileCheck className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-base font-black text-snow leading-tight truncate">
+                  Documents — {docTarget.firstName} {docTarget.lastName}
+                </h3>
+                <p className="text-xs text-mist/50">Déposez les pièces ; la validation est faite par l&apos;administration.</p>
+              </div>
+            </div>
+
+            {docLoading ? (
+              <div className="py-12 flex justify-center">
+                <Loader2 className="h-8 w-8 text-signal animate-spin" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {docItems.map((item) => {
+                  const meta = DOC_STATUS_META[item.status] || DOC_STATUS_META.MISSING;
+                  const fileHref = backendImageUrl(item.fileUrl);
+                  const busy = uploadingCat === item.category;
+                  return (
+                    <div key={item.category} className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-black text-snow leading-tight">{item.label}</p>
+                          <span className="text-[10px] font-black uppercase tracking-wider text-mist/40">
+                            {item.required ? "Obligatoire" : "Optionnel"}
+                          </span>
+                        </div>
+                        <span className={`flex items-center gap-1.5 px-2.5 py-1 border text-[10px] font-black rounded-lg uppercase tracking-wider shrink-0 ${meta.cls}`}>
+                          <meta.Icon className="h-3 w-3" />
+                          {meta.label}
+                        </span>
+                      </div>
+
+                      {item.status === "REJECTED" && item.reviewNotes && (
+                        <p className="text-[11px] text-red-400/80 bg-red-500/[0.06] border border-red-500/15 rounded-lg px-3 py-1.5">
+                          <span className="font-black uppercase tracking-wider">Motif : </span>
+                          {item.reviewNotes}
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-between gap-3">
+                        {fileHref ? (
+                          <a
+                            href={fileHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs text-mist/70 hover:text-snow transition-colors"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            Voir
+                          </a>
+                        ) : <span />}
+                        <input
+                          ref={(el) => { docInputsRef.current[item.category] = el; }}
+                          type="file"
+                          accept="image/*,application/pdf"
+                          className="hidden"
+                          onChange={(e) => void handleDocFile(item.category, e.target.files?.[0])}
+                        />
+                        <button
+                          onClick={() => docInputsRef.current[item.category]?.click()}
+                          disabled={busy}
+                          className="px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 border bg-signal/10 text-signal border-signal/20 hover:bg-signal/20 disabled:opacity-50 transition-all"
+                        >
+                          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                          {item.status === "MISSING" ? "Téléverser" : "Remplacer"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="flex justify-end pt-1">
+              <button
+                onClick={() => setDocTarget(null)}
+                className="px-4 py-2 font-black rounded-xl text-xs text-mist hover:bg-white/5 hover:text-snow transition-all"
+              >
+                Fermer
+              </button>
+            </div>
           </div>
         </div>
       )}

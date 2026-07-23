@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/hooks";
-import { superAdminService, School } from "@/lib/superadmin-service";
+import { superAdminService, School, type SchoolMonitor } from "@/lib/superadmin-service";
 import type { DocumentChecklistItem } from "@/lib/school-document-service";
 import { backendImageUrl } from "@/lib/admin-offer-service";
 import {
@@ -33,6 +33,11 @@ export default function SuperAdminSchoolsPage() {
     const [docItems, setDocItems] = useState<DocumentChecklistItem[]>([]);
     const [docLoading, setDocLoading] = useState(false);
     const [reviewingId, setReviewingId] = useState<string | null>(null);
+    // Revue documentaire des moniteurs de l'école
+    const [monitors, setMonitors] = useState<SchoolMonitor[]>([]);
+    const [monitorTarget, setMonitorTarget] = useState<SchoolMonitor | null>(null);
+    const [monitorItems, setMonitorItems] = useState<DocumentChecklistItem[]>([]);
+    const [monitorLoading, setMonitorLoading] = useState(false);
 
     const fetchSchools = async () => {
         if (!token) return;
@@ -106,14 +111,91 @@ export default function SuperAdminSchoolsPage() {
 
     const isRejected = (s: School) => s.governanceStatus === "REJECTED";
 
+    /** Rendu d'une checklist documentaire avec les actions Approuver / Rejeter. */
+    const renderChecklist = (items: DocumentChecklistItem[], forMonitor: boolean) => (
+        <div className="space-y-3">
+            {items.map((item) => {
+                const meta = DOC_STATUS_META[item.status] || DOC_STATUS_META.MISSING;
+                const fileHref = backendImageUrl(item.fileUrl);
+                const busy = reviewingId === item.documentId;
+                return (
+                    <div key={item.category} className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                                <p className="text-sm font-black text-snow leading-tight">{item.label}</p>
+                                <span className="text-[10px] font-black uppercase tracking-wider text-mist/40">
+                                    {item.required ? "Obligatoire" : "Optionnel"}
+                                </span>
+                            </div>
+                            <span className={`flex items-center gap-1.5 px-2.5 py-1 border text-[10px] font-black rounded-lg uppercase tracking-wider shrink-0 ${meta.cls}`}>
+                                <meta.Icon className="h-3 w-3" />
+                                {meta.label}
+                            </span>
+                        </div>
+
+                        {item.status === "REJECTED" && item.reviewNotes && (
+                            <p className="text-[11px] text-red-400/80 bg-red-500/[0.06] border border-red-500/15 rounded-lg px-3 py-1.5">
+                                {item.reviewNotes}
+                            </p>
+                        )}
+
+                        {item.documentId ? (
+                            <div className="flex items-center justify-between gap-3">
+                                {fileHref && (
+                                    <a
+                                        href={fileHref}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1.5 text-xs text-mist/70 hover:text-snow transition-colors"
+                                    >
+                                        <ExternalLink className="h-3.5 w-3.5" />
+                                        Voir
+                                    </a>
+                                )}
+                                <div className="flex items-center gap-2 ml-auto">
+                                    <button
+                                        onClick={() => handleReview(item.documentId!, "REJECT", forMonitor)}
+                                        disabled={busy || item.status === "REJECTED"}
+                                        className="px-3 py-1.5 font-black rounded-lg text-xs flex items-center gap-1.5 border bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ThumbsDown className="h-3.5 w-3.5" />}
+                                        Rejeter
+                                    </button>
+                                    <button
+                                        onClick={() => handleReview(item.documentId!, "APPROVE", forMonitor)}
+                                        disabled={busy || item.status === "VERIFIED"}
+                                        className="px-3 py-1.5 font-black rounded-lg text-xs flex items-center gap-1.5 border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ThumbsUp className="h-3.5 w-3.5" />}
+                                        Approuver
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="text-xs text-mist/40 italic">Aucune pièce téléversée pour cette catégorie.</p>
+                        )}
+                    </div>
+                );
+            })}
+        </div>
+    );
+
     // Ouvre la revue documentaire d'une école (charge la checklist).
     const openDocuments = async (school: School) => {
         if (!token) return;
         setDocTarget(school);
         setDocItems([]);
+        setMonitors([]);
+        setMonitorTarget(null);
+        setMonitorItems([]);
         setDocLoading(true);
         try {
-            setDocItems(await superAdminService.getSchoolDocuments(school.id, token));
+            const [docs, mons] = await Promise.all([
+                superAdminService.getSchoolDocuments(school.id, token),
+                superAdminService.getSchoolMonitors(school.id, token),
+            ]);
+            setDocItems(docs);
+            setMonitors(mons);
         } catch (err: any) {
             toast.error(err.message || "Erreur lors du chargement des documents");
         } finally {
@@ -121,13 +203,29 @@ export default function SuperAdminSchoolsPage() {
         }
     };
 
-    // Approuve ou rejette une pièce ; met à jour la liste renvoyée par le backend.
-    const handleReview = async (documentId: string, decision: "APPROVE" | "REJECT") => {
+    // Ouvre la checklist documentaire d'un moniteur de l'école.
+    const openMonitorDocuments = async (mon: SchoolMonitor) => {
+        if (!token) return;
+        setMonitorTarget(mon);
+        setMonitorItems([]);
+        setMonitorLoading(true);
+        try {
+            setMonitorItems(await superAdminService.getMonitorDocuments(mon.id, token));
+        } catch (err: any) {
+            toast.error(err.message || "Erreur lors du chargement des documents du moniteur");
+        } finally {
+            setMonitorLoading(false);
+        }
+    };
+
+    // Approuve ou rejette une pièce ; le backend renvoie la checklist concernée.
+    const handleReview = async (documentId: string, decision: "APPROVE" | "REJECT", forMonitor = false) => {
         if (!token) return;
         setReviewingId(documentId);
         try {
             const updated = await superAdminService.reviewDocument(documentId, decision, undefined, token);
-            setDocItems(updated);
+            if (forMonitor) setMonitorItems(updated);
+            else setDocItems(updated);
             toast.success(decision === "APPROVE" ? "Pièce approuvée." : "Pièce rejetée.");
         } catch (err: any) {
             toast.error(err.message || "Erreur lors de la revue");
@@ -406,71 +504,52 @@ export default function SuperAdminSchoolsPage() {
                                 <Loader2 className="h-8 w-8 text-signal animate-spin" />
                             </div>
                         ) : (
-                            <div className="space-y-3">
-                                {docItems.map((item) => {
-                                    const meta = DOC_STATUS_META[item.status] || DOC_STATUS_META.MISSING;
-                                    const fileHref = backendImageUrl(item.fileUrl);
-                                    const busy = reviewingId === item.documentId;
-                                    return (
-                                        <div key={item.category} className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 space-y-3">
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="min-w-0">
-                                                    <p className="text-sm font-black text-snow leading-tight">{item.label}</p>
-                                                    <span className="text-[10px] font-black uppercase tracking-wider text-mist/40">
-                                                        {item.required ? "Obligatoire" : "Optionnel"}
-                                                    </span>
-                                                </div>
-                                                <span className={`flex items-center gap-1.5 px-2.5 py-1 border text-[10px] font-black rounded-lg uppercase tracking-wider shrink-0 ${meta.cls}`}>
-                                                    <meta.Icon className="h-3 w-3" />
-                                                    {meta.label}
-                                                </span>
-                                            </div>
+                            <>
+                                {/* Pièces de l'auto-école */}
+                                {renderChecklist(docItems, false)}
 
-                                            {item.status === "REJECTED" && item.reviewNotes && (
-                                                <p className="text-[11px] text-red-400/80 bg-red-500/[0.06] border border-red-500/15 rounded-lg px-3 py-1.5">
-                                                    {item.reviewNotes}
-                                                </p>
-                                            )}
+                                {/* Pièces des moniteurs (déposées par le gérant) */}
+                                <div className="pt-2 space-y-3">
+                                    <h4 className="text-[11px] font-black text-mist/60 uppercase tracking-wider">
+                                        Moniteurs ({monitors.length})
+                                    </h4>
 
-                                            {item.documentId ? (
-                                                <div className="flex items-center justify-between gap-3">
-                                                    {fileHref && (
-                                                        <a
-                                                            href={fileHref}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="inline-flex items-center gap-1.5 text-xs text-mist/70 hover:text-snow transition-colors"
-                                                        >
-                                                            <ExternalLink className="h-3.5 w-3.5" />
-                                                            Voir
-                                                        </a>
-                                                    )}
-                                                    <div className="flex items-center gap-2 ml-auto">
-                                                        <button
-                                                            onClick={() => handleReview(item.documentId!, "REJECT")}
-                                                            disabled={busy || item.status === "REJECTED"}
-                                                            className="px-3 py-1.5 font-black rounded-lg text-xs flex items-center gap-1.5 border bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
-                                                        >
-                                                            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ThumbsDown className="h-3.5 w-3.5" />}
-                                                            Rejeter
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleReview(item.documentId!, "APPROVE")}
-                                                            disabled={busy || item.status === "VERIFIED"}
-                                                            className="px-3 py-1.5 font-black rounded-lg text-xs flex items-center gap-1.5 border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
-                                                        >
-                                                            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ThumbsUp className="h-3.5 w-3.5" />}
-                                                            Approuver
-                                                        </button>
-                                                    </div>
+                                    {monitors.length === 0 ? (
+                                        <p className="text-xs text-mist/40 italic">Aucun moniteur dans cette auto-école.</p>
+                                    ) : (
+                                        <div className="flex flex-wrap gap-2">
+                                            {monitors.map((mon) => (
+                                                <button
+                                                    key={mon.id}
+                                                    onClick={() => openMonitorDocuments(mon)}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                                                        monitorTarget?.id === mon.id
+                                                            ? "bg-signal/10 text-signal border-signal/20"
+                                                            : "bg-white/[0.03] text-mist border-white/[0.08] hover:text-snow hover:bg-white/[0.06]"
+                                                    }`}
+                                                >
+                                                    {mon.firstName} {mon.lastName}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {monitorTarget && (
+                                        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-3 space-y-3">
+                                            <p className="text-xs font-black text-snow">
+                                                Pièces de {monitorTarget.firstName} {monitorTarget.lastName}
+                                            </p>
+                                            {monitorLoading ? (
+                                                <div className="py-6 flex justify-center">
+                                                    <Loader2 className="h-6 w-6 text-signal animate-spin" />
                                                 </div>
                                             ) : (
-                                                <p className="text-xs text-mist/40 italic">Aucune pièce téléversée pour cette catégorie.</p>
+                                                renderChecklist(monitorItems, true)
                                             )}
                                         </div>
-                                    );
-                                })}
-                            </div>
+                                    )}
+                                </div>
+                            </>
                         )}
 
                         <div className="flex justify-end pt-1">

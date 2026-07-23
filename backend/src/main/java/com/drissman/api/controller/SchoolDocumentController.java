@@ -63,6 +63,44 @@ public class SchoolDocumentController {
                         })));
     }
 
+    /** Checklist documentaire d'un moniteur de l'école du gérant. */
+    @GetMapping("/monitors/{monitorId}")
+    public Mono<List<DocumentChecklistItemDto>> getMonitorChecklist(
+            Principal principal, @PathVariable UUID monitorId) {
+        return currentUserSchoolId(principal)
+                .then(schoolDocumentService.getMonitorChecklist(monitorId));
+    }
+
+    /** Téléversement d'une pièce de moniteur par le gérant (multipart + `category`). */
+    @PostMapping(path = "/monitors/{monitorId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Mono<List<DocumentChecklistItemDto>> uploadMonitorDocument(
+            Principal principal,
+            @PathVariable UUID monitorId,
+            @RequestPart("file") Mono<FilePart> filePartMono,
+            @RequestParam("category") String category) {
+        if (principal == null) {
+            return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentification requise"));
+        }
+        UUID userId = UUID.fromString(principal.getName());
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable")))
+                .flatMap(user -> filePartMono.flatMap(filePart -> DataBufferUtils
+                        .join(filePart.content())
+                        .map(buffer -> {
+                            byte[] bytes = new byte[buffer.readableByteCount()];
+                            buffer.read(bytes);
+                            DataBufferUtils.release(buffer);
+                            return bytes;
+                        })
+                        .flatMap(bytes -> {
+                            String contentType = filePart.headers().getContentType() != null
+                                    ? filePart.headers().getContentType().toString()
+                                    : MediaType.APPLICATION_OCTET_STREAM_VALUE;
+                            return schoolDocumentService.uploadMonitorDocument(
+                                    user, monitorId, bytes, filePart.filename(), contentType, category);
+                        })));
+    }
+
     private Mono<UUID> currentUserSchoolId(Principal principal) {
         if (principal == null) {
             return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentification requise"));

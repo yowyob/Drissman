@@ -13,6 +13,16 @@ export interface DocumentChecklistItem {
     fileUrl?: string | null;
     reviewNotes?: string | null;
     uploadedAt?: string | null;
+    /** true = pièce réellement rattachée au Document-hub du Kernel. */
+    kernelSynced?: boolean;
+}
+
+/** État de l'intégration Kernel, lisible depuis l'app (sans accès serveur). */
+export interface KernelIntegrationStatus {
+    kernelReachable: boolean;
+    organizationConfigured: boolean;
+    mirroringOperational: boolean;
+    summary: string;
 }
 
 export const schoolDocumentService = {
@@ -20,12 +30,44 @@ export const schoolDocumentService = {
     getChecklist: (token: string) =>
         apiClient.get<DocumentChecklistItem[]>("/schools/admin/documents", token),
 
+    /** État de l'intégration Kernel (joignable ? organisation configurée ?). */
+    getKernelIntegration: (token: string) =>
+        apiClient.get<KernelIntegrationStatus>("/kernel/integration", token),
+
     /** Téléverse une pièce pour une catégorie ; renvoie la checklist à jour. */
     upload: async (file: File, category: string, token: string): Promise<DocumentChecklistItem[]> => {
         const formData = new FormData();
         formData.append("file", file);
         const res = await fetch(
             `${API_BASE_URL}/schools/admin/documents?category=${encodeURIComponent(category)}`,
+            {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData,
+            }
+        );
+        if (!res.ok) {
+            const msg = await res.text();
+            throw new Error(msg || "Échec de l'upload du document");
+        }
+        return res.json();
+    },
+
+    /** Checklist documentaire d'un moniteur (vue gérant). */
+    getMonitorChecklist: (monitorId: string, token: string) =>
+        apiClient.get<DocumentChecklistItem[]>(`/schools/admin/documents/monitors/${monitorId}`, token),
+
+    /** Téléverse une pièce d'un moniteur (déposée par le gérant). */
+    uploadMonitorDocument: async (
+        monitorId: string,
+        file: File,
+        category: string,
+        token: string
+    ): Promise<DocumentChecklistItem[]> => {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch(
+            `${API_BASE_URL}/schools/admin/documents/monitors/${monitorId}?category=${encodeURIComponent(category)}`,
             {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` },

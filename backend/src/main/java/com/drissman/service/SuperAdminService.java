@@ -32,7 +32,23 @@ public class SuperAdminService {
     private final EnrollmentRepository enrollmentRepository;
     private final InvoiceRepository invoiceRepository;
     private final OfferRepository offerRepository;
+    private final MonitorRepository monitorRepository;
     private final KernelGovernanceService kernelGovernanceService;
+
+    /** Moniteurs d'une école (vue super-admin, pour la revue documentaire). */
+    public Flux<com.drissman.api.dto.MonitorDto> getSchoolMonitors(UUID schoolId) {
+        return monitorRepository.findBySchoolId(schoolId)
+                .map(m -> com.drissman.api.dto.MonitorDto.builder()
+                        .id(m.getId())
+                        .schoolId(m.getSchoolId())
+                        .firstName(m.getFirstName())
+                        .lastName(m.getLastName())
+                        .licenseNumber(m.getLicenseNumber())
+                        .phoneNumber(m.getPhoneNumber())
+                        .userId(m.getUserId())
+                        .status(m.getStatus())
+                        .build());
+    }
 
     /** File d'attente : écoles non encore validées (jamais rejetées). */
     public Flux<School> getPendingSchools() {

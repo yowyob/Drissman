@@ -29,4 +29,11 @@ public class DocumentChecklistItemDto {
     private String fileUrl;
     private String reviewNotes;
     private LocalDateTime uploadedAt;
+
+    /**
+     * true = la pièce a bien été archivée ET rattachée au Document-hub du kernel
+     * (référence kernel obtenue). false = stockée localement uniquement.
+     * Permet de constater l'état réel du mirroring sans accès aux logs serveur.
+     */
+    private boolean kernelSynced;
 }
