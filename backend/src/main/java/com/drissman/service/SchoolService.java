@@ -22,6 +22,7 @@ public class SchoolService {
         private final SchoolRepository schoolRepository;
         private final OfferRepository offerRepository;
         private final com.drissman.domain.repository.ReviewRepository reviewRepository;
+        private final com.drissman.kernel.YowyobSearchService yowyobSearchService;
 
         /** Earth radius in km for Haversine formula */
         private static final double EARTH_RADIUS_KM = 6371.0;
@@ -160,6 +161,8 @@ public class SchoolService {
                                                 school.setWebsite(request.getWebsite());
                                         return schoolRepository.save(school);
                                 })
+                                // Réindexation yowyob-search (best-effort, non bloquant).
+                                .doOnNext(yowyobSearchService::indexSchoolInBackground)
                                 .flatMap(savedSchool -> savedSchool != null ? findById(savedSchool.getId())
                                                 : Mono.empty());
         }

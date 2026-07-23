@@ -54,6 +54,12 @@ public class SuperAdminController {
         return schoolDocumentService.getChecklist(id);
     }
 
+    /** Réindexe toutes les auto-écoles dans yowyob-search (best-effort, en tâche de fond). */
+    @PostMapping("/search/reindex")
+    public Mono<java.util.Map<String, Object>> reindexSearch() {
+        return superAdminService.reindexAllSchools();
+    }
+
     /** Moniteurs d'une école, pour accéder à leur revue documentaire. */
     @GetMapping("/schools/{schoolId}/monitors")
     public Flux<com.drissman.api.dto.MonitorDto> getSchoolMonitors(@PathVariable UUID schoolId) {

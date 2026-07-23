@@ -34,6 +34,19 @@ public class SuperAdminService {
     private final OfferRepository offerRepository;
     private final MonitorRepository monitorRepository;
     private final KernelGovernanceService kernelGovernanceService;
+    private final com.drissman.kernel.YowyobSearchService yowyobSearchService;
+
+    /**
+     * Réindexe TOUTES les auto-écoles dans yowyob-search.
+     * Utile au premier déploiement (les écoles existantes ne sont sinon indexées
+     * qu'à leur prochaine modification) ou après une panne du service de recherche.
+     */
+    public Mono<Map<String, Object>> reindexAllSchools() {
+        return schoolRepository.findAll()
+                .doOnNext(yowyobSearchService::indexSchoolInBackground)
+                .count()
+                .map(n -> Map.of("scheduled", n));
+    }
 
     /** Moniteurs d'une école (vue super-admin, pour la revue documentaire). */
     public Flux<com.drissman.api.dto.MonitorDto> getSchoolMonitors(UUID schoolId) {
@@ -62,7 +75,9 @@ public class SuperAdminService {
         return schoolRepository.applyGovernance(schoolId, true, "APPROVED", null)
                 .then(schoolRepository.findById(schoolId))
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Auto-école non trouvée")))
-                .doOnNext(school -> kernelGovernanceService.mirrorApprovalInBackground(school, null));
+                .doOnNext(school -> kernelGovernanceService.mirrorApprovalInBackground(school, null))
+                // L'école devient "vérifiée" : réindexer pour refléter le badge.
+                .doOnNext(yowyobSearchService::indexSchoolInBackground);
     }
 
     /** Rejet motivé : école non vérifiée + décision miroitée au kernel (best-effort). */
@@ -74,7 +89,9 @@ public class SuperAdminService {
         return schoolRepository.applyGovernance(schoolId, false, "REJECTED", trimmed)
                 .then(schoolRepository.findById(schoolId))
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Auto-école non trouvée")))
-                .doOnNext(school -> kernelGovernanceService.mirrorRejectionInBackground(school, trimmed));
+                .doOnNext(school -> kernelGovernanceService.mirrorRejectionInBackground(school, trimmed))
+                // École rejetée : la retirer de la recherche globale.
+                .doOnNext(school -> yowyobSearchService.removeSchoolInBackground(school.getId()));
     }
 
     public Mono<GlobalStatsDto> getGlobalStats() {
@@ -220,7 +237,9 @@ public class SuperAdminService {
                     boolean nextStatus = !Boolean.TRUE.equals(school.getIsVerified());
                     return schoolRepository.updateVerificationStatus(schoolId, nextStatus)
                             .then(schoolRepository.findById(schoolId));
-                });
+                })
+                // Le badge "vérifié" fait partie du document indexé : on resynchronise.
+                .doOnNext(yowyobSearchService::indexSchoolInBackground);
     }
 
     public Flux<User> getAllUsers() {
