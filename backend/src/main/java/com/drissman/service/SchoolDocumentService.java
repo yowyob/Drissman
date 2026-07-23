@@ -39,6 +39,7 @@ public class SchoolDocumentService {
     private final SchoolDocumentRepository documentRepository;
     private final SchoolRepository schoolRepository;
     private final MonitorRepository monitorRepository;
+    private final com.drissman.domain.repository.UserRepository userRepository;
     private final ImageStorageService storageService;
     private final KernelDocumentService kernelDocumentService;
 
@@ -196,18 +197,47 @@ public class SchoolDocumentService {
     /** Archive + rattache au Document-hub kernel sans bloquer la réponse au gérant. */
     private void mirrorToKernelInBackground(User schoolAdmin, SchoolDocument saved, byte[] bytes,
                                             String filename, String contentType, DocumentCategory category) {
-        schoolRepository.findById(saved.getSchoolId())
-                .flatMap((School school) -> kernelDocumentService
-                        .archiveAndAttach(schoolAdmin, school, bytes, filename, contentType, category.name())
-                        .flatMap(refs -> {
-                            saved.setKernelFileId(refs.kernelFileId());
-                            saved.setKernelDocumentLinkId(refs.documentLinkId());
-                            saved.setUpdatedAt(LocalDateTime.now());
-                            return documentRepository.save(saved);
-                        }))
+        resolveSubjectKernelUserId(schoolAdmin, saved, category)
+                .defaultIfEmpty(NO_SUBJECT)
+                .flatMap(subject -> schoolRepository.findById(saved.getSchoolId())
+                        .flatMap((School school) -> kernelDocumentService
+                                .archiveAndAttach(schoolAdmin, school, bytes, filename, contentType,
+                                        category.name(), category.personal(),
+                                        NO_SUBJECT.equals(subject) ? null : subject)
+                                .flatMap(refs -> {
+                                    saved.setKernelFileId(refs.kernelFileId());
+                                    saved.setKernelDocumentLinkId(refs.documentLinkId());
+                                    saved.setUpdatedAt(LocalDateTime.now());
+                                    return documentRepository.save(saved);
+                                })))
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe(v -> {}, e -> log.debug("Miroir document kernel indisponible pour {} : {}",
                         saved.getId(), e.getMessage()));
+    }
+
+    /** Sentinelle : aucun compte-miroir kernel résolu pour le sujet de la pièce. */
+    private static final UUID NO_SUBJECT = new UUID(0L, 0L);
+
+    /**
+     * Compte-miroir kernel de la PERSONNE concernée par une pièce personnelle :
+     *  - pièce de l'école (CNI du gérant)  -> le gérant lui-même ;
+     *  - pièce d'un moniteur              -> le compte lié au moniteur, s'il existe.
+     * Vide si la pièce n'est pas personnelle ou si aucun compte-miroir n'existe
+     * (l'appelant retombe alors sur la cible ORGANIZATION).
+     */
+    private Mono<UUID> resolveSubjectKernelUserId(User schoolAdmin, SchoolDocument saved,
+                                                  DocumentCategory category) {
+        if (!category.personal()) {
+            return Mono.empty();
+        }
+        if (saved.getMonitorId() == null) {
+            return Mono.justOrEmpty(schoolAdmin.getKernelUserId());
+        }
+        return monitorRepository.findById(saved.getMonitorId())
+                .flatMap(m -> m.getUserId() == null
+                        ? Mono.<UUID>empty()
+                        : userRepository.findById(m.getUserId())
+                                .flatMap(u -> Mono.justOrEmpty(u.getKernelUserId())));
     }
 
     private static boolean after(LocalDateTime a, LocalDateTime b) {

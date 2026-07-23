@@ -35,7 +35,9 @@ public class KernelDocumentService {
     private final KernelAuthService kernelAuthService;
     private final KernelOrganization kernelOrganization;
 
-    public static final String TARGET_TYPE = "ORGANIZATION";
+    public static final String TARGET_ORGANIZATION = "ORGANIZATION";
+    /** Cible personnelle : s'attache SANS organisation (doc kernel §8bis). */
+    public static final String TARGET_USER = "USER";
 
     /** Références kernel d'une pièce miroitée (null si non abouti). */
     public record DocumentRef(UUID kernelFileId, UUID documentLinkId) {}
@@ -45,15 +47,27 @@ public class KernelDocumentService {
      * l'école. Renvoie les références kernel, ou Mono.empty() en best-effort.
      */
     public Mono<DocumentRef> archiveAndAttach(User schoolAdmin, School school, byte[] bytes,
-                                              String filename, String contentType, String category) {
-        // MODÈLE A : la cible est l'organisation UNIQUE de Drissman, pas une org
-        // par école (les écoles ne sont pas des organisations kernel).
-        UUID orgId = kernelOrganization.id().orElse(null);
+                                              String filename, String contentType, String category,
+                                              boolean personal, UUID subjectKernelUserId) {
         Object ref = school != null ? school.getId() : null;
-        if (orgId == null) {
-            KernelMirrorLog.skip("document.attach", ref,
-                    "KERNEL_ORGANIZATION_ID non configuré (organisation Drissman)");
-            return Mono.empty();
+
+        // Pièce PERSONNELLE (CNI, permis…) -> cible USER, s'attache SANS organisation.
+        // Pièce de la personne morale -> cible ORGANIZATION (MODÈLE A : org unique Drissman).
+        final String targetType;
+        final UUID targetId;
+        if (personal && subjectKernelUserId != null) {
+            targetType = TARGET_USER;
+            targetId = subjectKernelUserId;
+        } else {
+            UUID orgId = kernelOrganization.id().orElse(null);
+            if (orgId == null) {
+                KernelMirrorLog.skip("document.attach", ref, personal
+                        ? "pièce personnelle sans compte-miroir kernel, et KERNEL_ORGANIZATION_ID absent"
+                        : "KERNEL_ORGANIZATION_ID non configuré (organisation Drissman)");
+                return Mono.empty();
+            }
+            targetType = TARGET_ORGANIZATION;
+            targetId = orgId;
         }
 
         return kernelAuthService.ensureToken(schoolAdmin)
@@ -63,8 +77,8 @@ public class KernelDocumentService {
                             Map<String, Object> body = new HashMap<>();
                             body.put("documentCategory", category);
                             body.put("fileId", fileId);
-                            body.put("targetId", orgId.toString());
-                            body.put("targetType", TARGET_TYPE);
+                            body.put("targetId", targetId.toString());
+                            body.put("targetType", targetType);
                             // Toutes les écoles partageant l'organisation Drissman, le libellé
                             // porte le nom de l'école pour rester traçable côté kernel.
                             String schoolName = school != null && school.getName() != null ? school.getName() : null;
@@ -73,12 +87,17 @@ public class KernelDocumentService {
                                     : filename;
                             if (label != null) body.put("label", label);
 
-                            Map<String, String> headers = KernelClient.bearerWithOrganization(token, orgId.toString());
+                            // L'en-tête organisation n'a de sens que pour une cible ORGANIZATION.
+                            Map<String, String> headers = TARGET_ORGANIZATION.equals(targetType)
+                                    ? KernelClient.bearerWithOrganization(token, targetId.toString())
+                                    : KernelClient.bearer(token);
+
                             return kernelClient.post("/api/document-hub/links", body, headers)
                                     .map(resp -> {
                                         UUID linkId = extractUuid(resp, "id");
                                         KernelMirrorLog.ok("document.attach", ref,
-                                                "category=" + category + " fileId=" + fileId + " linkId=" + linkId);
+                                                "category=" + category + " target=" + targetType
+                                                        + " fileId=" + fileId + " linkId=" + linkId);
                                         return new DocumentRef(toUuid(fileId), linkId);
                                     });
                         }))

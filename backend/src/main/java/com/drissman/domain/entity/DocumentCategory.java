@@ -16,17 +16,18 @@ import java.util.Locale;
  */
 public enum DocumentCategory {
 
-    // --- Pièces de l'auto-école ---
-    BUSINESS_LICENSE("Autorisation d'exploitation", true, Scope.SCHOOL),
-    TRADE_REGISTER("Registre de commerce (RCCM)", true, Scope.SCHOOL),
-    OWNER_ID("CNI du gérant", true, Scope.SCHOOL),
-    TAX_CLEARANCE("Attestation de non-redevance fiscale", false, Scope.SCHOOL),
+    // --- Pièces de l'auto-école (personne morale) ---
+    BUSINESS_LICENSE("Autorisation d'exploitation", true, Scope.SCHOOL, false),
+    TRADE_REGISTER("Registre de commerce (RCCM)", true, Scope.SCHOOL, false),
+    TAX_CLEARANCE("Attestation de non-redevance fiscale", false, Scope.SCHOOL, false),
+    // Pièce d'identité du gérant : document PERSONNEL.
+    OWNER_ID("CNI du gérant", true, Scope.SCHOOL, true),
 
-    // --- Pièces d'un moniteur (déposées par le gérant) ---
-    MONITOR_ID("CNI du moniteur", true, Scope.MONITOR),
-    MONITOR_LICENSE("Permis de conduire", true, Scope.MONITOR),
-    MONITOR_TEACHING_CERT("Agrément de moniteur", true, Scope.MONITOR),
-    MONITOR_MEDICAL("Certificat médical", false, Scope.MONITOR);
+    // --- Pièces d'un moniteur (déposées par le gérant) : toutes personnelles ---
+    MONITOR_ID("CNI du moniteur", true, Scope.MONITOR, true),
+    MONITOR_LICENSE("Permis de conduire", true, Scope.MONITOR, true),
+    MONITOR_TEACHING_CERT("Agrément de moniteur", true, Scope.MONITOR, true),
+    MONITOR_MEDICAL("Certificat médical", false, Scope.MONITOR, true);
 
     /** Portée d'une pièce : l'auto-école elle-même, ou un de ses moniteurs. */
     public enum Scope {
@@ -37,11 +38,22 @@ public enum DocumentCategory {
     private final String label;
     private final boolean required;
     private final Scope scope;
+    private final boolean personal;
 
-    DocumentCategory(String label, boolean required, Scope scope) {
+    DocumentCategory(String label, boolean required, Scope scope, boolean personal) {
         this.label = label;
         this.required = required;
         this.scope = scope;
+        this.personal = personal;
+    }
+
+    /**
+     * true = pièce rattachée à une PERSONNE (cible kernel USER), qui s'attache
+     * SANS organisation — donc archivable même sans KERNEL_ORGANIZATION_ID.
+     * false = pièce de la personne morale (cible ORGANIZATION).
+     */
+    public boolean personal() {
+        return personal;
     }
 
     public String label() {

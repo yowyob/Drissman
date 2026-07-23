@@ -59,8 +59,11 @@ public class KernelIntegrationController {
             return "Kernel injoignable — les données restent locales et seront à resynchroniser.";
         }
         if (!orgConfigured) {
-            return "Kernel joignable, mais l'organisation Drissman n'est pas configurée "
-                    + "(KERNEL_ORGANIZATION_ID) — les envois org-scopés sont ignorés.";
+            // Les pièces PERSONNELLES (CNI, permis) s'attachent sans organisation :
+            // l'archivage est donc partiel, pas nul.
+            return "Kernel joignable. Les pièces personnelles (CNI, permis) sont archivées ; "
+                    + "les pièces d'entreprise attendent la configuration de l'organisation "
+                    + "(KERNEL_ORGANIZATION_ID).";
         }
         return "Kernel joignable et organisation configurée — mirroring opérationnel.";
     }
