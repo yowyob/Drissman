@@ -133,10 +133,28 @@ public class KernelAuthService {
                             + ", status=" + response.getData().path("status").asText("") + ")");
         }
 
+        // L'id du compte-miroir est propre à un TENANT. Si le tenant de Drissman
+        // change (bascule vers l'espace dédié de l'organisation), le kernel renvoie
+        // un id différent : il faut alors ÉCRASER la valeur stockée, sinon on garde
+        // un kernelUserId périmé pointant vers l'ancien espace — ce qui casserait
+        // silencieusement le ciblage des pièces personnelles (CNI, permis).
         String kernelId = response.getData().path("id").asText(null);
-        if (kernelId != null && user.getKernelUserId() == null) {
-            user.setKernelUserId(UUID.fromString(kernelId));
-            return userRepository.save(user);
+        if (kernelId != null && !kernelId.isBlank()) {
+            UUID parsed;
+            try {
+                parsed = UUID.fromString(kernelId);
+            } catch (IllegalArgumentException e) {
+                parsed = null;
+            }
+            if (parsed != null && !parsed.equals(user.getKernelUserId())) {
+                UUID previous = user.getKernelUserId();
+                user.setKernelUserId(parsed);
+                if (previous != null) {
+                    KernelMirrorLog.ok("user-sync", user.getEmail(),
+                            "kernelUserId resynchronisé (" + previous + " -> " + parsed + ")");
+                }
+                return userRepository.save(user);
+            }
         }
         return Mono.just(user);
     }

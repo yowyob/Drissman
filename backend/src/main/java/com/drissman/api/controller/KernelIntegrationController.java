@@ -2,6 +2,7 @@ package com.drissman.api.controller;
 
 import com.drissman.kernel.KernelClient;
 import com.drissman.kernel.KernelOrganization;
+import com.drissman.kernel.YowyobSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +31,19 @@ public class KernelIntegrationController {
 
     private final KernelClient kernelClient;
     private final KernelOrganization kernelOrganization;
+    private final YowyobSearchService yowyobSearchService;
+
+    /**
+     * DIAGNOSTIC yowyob-search : renvoie la réponse BRUTE du moteur interrogé
+     * avec nos identifiants et notre tenant. Permet de vérifier si nos écoles
+     * sont réellement indexées, sans dépendre de l'interface publique.
+     */
+    @GetMapping("/search-check")
+    public Mono<String> searchCheck(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "auto") String q,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String collection) {
+        return yowyobSearchService.searchRaw(q, collection);
+    }
 
     @GetMapping("/integration")
     public Mono<Map<String, Object>> integration() {

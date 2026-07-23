@@ -78,6 +78,35 @@ public class YowyobSearchService {
                 .subscribe(v -> {}, e -> {});
     }
 
+    /**
+     * DIAGNOSTIC : interroge yowyob-search avec NOS identifiants et NOTRE tenant.
+     *
+     * Permet de savoir si nos documents sont réellement présents dans l'index,
+     * indépendamment de ce qu'affiche l'interface publique du moteur (qui peut
+     * filtrer par tenant et ne surfacer que certaines collections).
+     */
+    public Mono<String> searchRaw(String q, String collection) {
+        if (!isConfigured()) {
+            return Mono.just("{\"error\":\"identifiants machine kernel absents\"}");
+        }
+        return client().get()
+                .uri(uriBuilder -> {
+                    uriBuilder.path("/api/search").queryParam("q", q == null || q.isBlank() ? "*" : q);
+                    if (collection != null && !collection.isBlank()) {
+                        uriBuilder.queryParam("collection", collection);
+                    }
+                    return uriBuilder.build();
+                })
+                .retrieve()
+                .bodyToMono(String.class)
+                .onErrorResume(e -> Mono.just("{\"error\":\"" + safe(e.getMessage()) + "\",\"body\":\""
+                        + safe(errorBody(e)) + "\"}"));
+    }
+
+    private static String safe(String s) {
+        return s == null ? "" : s.replace("\"", "'").replace("\n", " ");
+    }
+
     Mono<Void> indexSchool(School school) {
         if (school == null || school.getId() == null) {
             return Mono.empty();
