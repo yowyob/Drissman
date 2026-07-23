@@ -71,6 +71,15 @@ public class SecurityConfig {
                         // Allow all preflight requests
                         .pathMatchers(HttpMethod.OPTIONS).permitAll()
 
+                        // ⚠️ ORDRE CRITIQUE : en WebFlux, la PREMIÈRE règle qui
+                        // correspond gagne. Les espaces réservés à un rôle doivent
+                        // donc précéder les règles publiques plus larges.
+                        // Sans cette ligne AVANT `GET /api/schools/**`, tous les GET
+                        // de l'espace gérant (factures, paiements, inscriptions,
+                        // élèves, véhicules, documents…) échappaient au contrôle de
+                        // rôle et n'étaient protégés que par le code des contrôleurs.
+                        .pathMatchers("/api/schools/admin/**").hasRole("SCHOOL_ADMIN")
+
                         // Public endpoints — no auth required
                         .pathMatchers("/api/auth/**").permitAll()
                         .pathMatchers("/api/health/**", "/api/health").permitAll()
@@ -93,7 +102,8 @@ public class SecurityConfig {
                         // Role-scoped areas
                         .pathMatchers("/api/kernel/admin/**").hasAnyRole("SCHOOL_ADMIN", "SUPER_ADMIN")
                         .pathMatchers("/api/superadmin/**").hasRole("SUPER_ADMIN")
-                        .pathMatchers("/api/schools/admin/**").hasRole("SCHOOL_ADMIN")
+                        // NB : /api/schools/admin/** est déclaré plus haut (avant la
+                        // règle publique GET /api/schools/**) — ne pas le redéclarer ici.
                         .pathMatchers("/api/monitors/**").hasAnyRole("MONITOR", "SCHOOL_ADMIN")
                         .pathMatchers("/api/enrollments/**").hasAnyRole("VISITOR", "CANDIDAT", "SCHOOL_ADMIN")
 
