@@ -37,9 +37,9 @@ public class KernelResourceService {
 
     private final KernelClient kernelClient;
     private final KernelAuthService kernelAuthService;
-    private final SchoolRepository schoolRepository;
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
+    private final KernelOrganization kernelOrganization;
 
     /** Crée la Resource kernel du véhicule et mémorise son id. */
     public void mirrorVehicleInBackground(Vehicle vehicle) {
@@ -127,28 +127,28 @@ public class KernelResourceService {
      * chaque cause de "vide" est tracée (SKIP) pour rester monitorable.
      */
     private Mono<reactor.util.function.Tuple2<UUID, String>> schoolContext(UUID schoolId) {
-        return schoolRepository.findById(schoolId)
-                .flatMap(school -> {
-                    if (school.getKernelOrganizationId() == null) {
-                        KernelMirrorLog.skip("school-context", schoolId,
-                                "école non provisionnée dans le kernel (organizationId manquant)");
-                        return Mono.<reactor.util.function.Tuple2<UUID, String>>empty();
-                    }
-                    return userRepository
-                            .findFirstBySchoolIdAndRole(schoolId, User.Role.SCHOOL_ADMIN)
-                            .switchIfEmpty(Mono.defer(() -> {
-                                KernelMirrorLog.skip("school-context", schoolId,
-                                        "aucun SCHOOL_ADMIN pour obtenir un token-miroir");
-                                return Mono.<User>empty();
-                            }))
-                            .flatMap(admin -> kernelAuthService.ensureToken(admin)
-                                    .switchIfEmpty(Mono.defer(() -> {
-                                        KernelMirrorLog.skip("school-context", schoolId,
-                                                "token-miroir kernel indisponible (miroir non vérifié ou kernel injoignable)");
-                                        return Mono.<String>empty();
-                                    }))
-                                    .map(token -> Tuples.of(school.getKernelOrganizationId(), token)));
-                });
+        // MODÈLE A : organisation UNIQUE de Drissman (les écoles ne sont pas des
+        // organisations kernel) ; le bearer reste le token-miroir de l'admin école.
+        UUID orgId = kernelOrganization.id().orElse(null);
+        if (orgId == null) {
+            KernelMirrorLog.skip("school-context", schoolId,
+                    "KERNEL_ORGANIZATION_ID non configuré (organisation Drissman)");
+            return Mono.empty();
+        }
+        return userRepository
+                .findFirstBySchoolIdAndRole(schoolId, User.Role.SCHOOL_ADMIN)
+                .switchIfEmpty(Mono.defer(() -> {
+                    KernelMirrorLog.skip("school-context", schoolId,
+                            "aucun SCHOOL_ADMIN pour obtenir un token-miroir");
+                    return Mono.<User>empty();
+                }))
+                .flatMap(admin -> kernelAuthService.ensureToken(admin)
+                        .switchIfEmpty(Mono.defer(() -> {
+                            KernelMirrorLog.skip("school-context", schoolId,
+                                    "token-miroir kernel indisponible (miroir non vérifié ou kernel injoignable)");
+                            return Mono.<String>empty();
+                        }))
+                        .map(token -> Tuples.of(orgId, token)));
     }
 
     private String resourceCode(Vehicle vehicle) {

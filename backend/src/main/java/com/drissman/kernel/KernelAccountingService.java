@@ -37,8 +37,8 @@ public class KernelAccountingService {
 
     private final KernelClient kernelClient;
     private final KernelAuthService kernelAuthService;
-    private final SchoolRepository schoolRepository;
     private final UserRepository userRepository;
+    private final KernelOrganization kernelOrganization;
 
     /** Reflète une facture PAID vers le cashier-core, sans bloquer le flux local. */
     public void reflectPaidInvoiceInBackground(Invoice invoice) {
@@ -89,15 +89,23 @@ public class KernelAccountingService {
     }
 
     /**
-     * Contexte kernel d'une école : (organizationId, token admin).
-     * Vide si l'école n'est pas provisionnée ou si aucun token n'est possible.
+     * Contexte kernel d'une école : (organizationId Drissman, token admin école).
+     *
+     * MODÈLE A : l'organisation est celle de Drissman (unique), pas une org par
+     * école. Le bearer reste le token-miroir de l'admin de l'école (utilisateur
+     * réel à l'origine de l'opération). Vide si l'organisation n'est pas
+     * configurée ou si aucun token n'est disponible.
      */
     private Mono<Tuple2<UUID, String>> schoolContext(UUID schoolId) {
-        return schoolRepository.findById(schoolId)
-                .filter(school -> school.getKernelOrganizationId() != null)
-                .flatMap(school -> userRepository
-                        .findFirstBySchoolIdAndRole(schoolId, User.Role.SCHOOL_ADMIN)
-                        .flatMap(kernelAuthService::ensureToken)
-                        .map(token -> Tuples.of(school.getKernelOrganizationId(), token)));
+        UUID orgId = kernelOrganization.id().orElse(null);
+        if (orgId == null) {
+            KernelMirrorLog.skip("accounting.bill", schoolId,
+                    "KERNEL_ORGANIZATION_ID non configuré (organisation Drissman)");
+            return Mono.empty();
+        }
+        return userRepository
+                .findFirstBySchoolIdAndRole(schoolId, User.Role.SCHOOL_ADMIN)
+                .flatMap(kernelAuthService::ensureToken)
+                .map(token -> Tuples.of(orgId, token));
     }
 }

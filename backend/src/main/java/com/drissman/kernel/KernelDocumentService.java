@@ -33,6 +33,7 @@ public class KernelDocumentService {
     private final KernelClient kernelClient;
     private final KernelFileService kernelFileService;
     private final KernelAuthService kernelAuthService;
+    private final KernelOrganization kernelOrganization;
 
     public static final String TARGET_TYPE = "ORGANIZATION";
 
@@ -45,13 +46,15 @@ public class KernelDocumentService {
      */
     public Mono<DocumentRef> archiveAndAttach(User schoolAdmin, School school, byte[] bytes,
                                               String filename, String contentType, String category) {
-        if (school == null || school.getKernelOrganizationId() == null) {
-            KernelMirrorLog.skip("document.attach", school != null ? school.getId() : null,
-                    "école non provisionnée (kernelOrganizationId absent)");
+        // MODÈLE A : la cible est l'organisation UNIQUE de Drissman, pas une org
+        // par école (les écoles ne sont pas des organisations kernel).
+        UUID orgId = kernelOrganization.id().orElse(null);
+        Object ref = school != null ? school.getId() : null;
+        if (orgId == null) {
+            KernelMirrorLog.skip("document.attach", ref,
+                    "KERNEL_ORGANIZATION_ID non configuré (organisation Drissman)");
             return Mono.empty();
         }
-        UUID orgId = school.getKernelOrganizationId();
-        Object ref = school.getId();
 
         return kernelAuthService.ensureToken(schoolAdmin)
                 .flatMap(token -> kernelFileService.archive(schoolAdmin, bytes, filename, contentType, category)
@@ -62,7 +65,13 @@ public class KernelDocumentService {
                             body.put("fileId", fileId);
                             body.put("targetId", orgId.toString());
                             body.put("targetType", TARGET_TYPE);
-                            if (filename != null) body.put("label", filename);
+                            // Toutes les écoles partageant l'organisation Drissman, le libellé
+                            // porte le nom de l'école pour rester traçable côté kernel.
+                            String schoolName = school != null && school.getName() != null ? school.getName() : null;
+                            String label = schoolName != null
+                                    ? schoolName + " — " + (filename != null ? filename : category)
+                                    : filename;
+                            if (label != null) body.put("label", label);
 
                             Map<String, String> headers = KernelClient.bearerWithOrganization(token, orgId.toString());
                             return kernelClient.post("/api/document-hub/links", body, headers)

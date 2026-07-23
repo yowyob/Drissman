@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190 40" width="760" height="160" role="img" aria-label="Drissman">
+  <title>Drissman</title>
+  <defs>
+    <linearGradient id="drissman-full-dark-g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFCE3A"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <!-- Marque -->
+  <rect x="2" y="2" width="36" height="36" rx="10" fill="url(#drissman-full-dark-g)"/>
+  <g fill="none" stroke="#0B0F14" stroke-width="2.4" stroke-linecap="round">
+    <circle cx="20" cy="20" r="10.5"/>
+    <circle cx="20" cy="20" r="3.1" fill="#0B0F14" stroke="none"/>
+    <line x1="20" y1="16.9" x2="20" y2="9.5"/>
+    <line x1="17.3" y1="21.6" x2="11" y2="25.2"/>
+    <line x1="22.7" y1="21.6" x2="29" y2="25.2"/>
+  </g>
+  <!-- Wordmark (version fond sombre) -->
+  <text x="48" y="27.5"
+        font-family="Inter, 'Segoe UI', Arial, Helvetica, sans-serif"
+        font-size="21" font-weight="900" letter-spacing="-0.6">
+    <tspan fill="#F5F5F5">DRISS</tspan><tspan fill="#FFC107">MAN</tspan>
+  </text>
+</svg>
