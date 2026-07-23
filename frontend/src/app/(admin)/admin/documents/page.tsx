@@ -105,8 +105,10 @@ export default function SchoolDocumentsPage() {
                             : "bg-amber-500/[0.06] border-amber-500/20"
                     }`}
                 >
-                    {integration.mirroringOperational ? (
-                        <Cloud className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+                    {integration.kernelReachable ? (
+                        <Cloud className={`h-5 w-5 shrink-0 mt-0.5 ${
+                            integration.mirroringOperational ? "text-emerald-400" : "text-amber-400"
+                        }`} />
                     ) : (
                         <CloudOff className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
                     )}
@@ -116,10 +118,13 @@ export default function SchoolDocumentsPage() {
                         }`}>
                             {integration.mirroringOperational
                                 ? "Archivage Kernel actif"
-                                : "Archivage Kernel indisponible"}
+                                : integration.kernelReachable
+                                    ? "Archivage Kernel partiel"
+                                    : "Archivage Kernel indisponible"}
                         </p>
                         <p className="text-xs text-mist/70 mt-0.5 leading-relaxed">{integration.summary}</p>
-                        {!integration.mirroringOperational && (
+                        {/* Ce rappel n'a de sens que si le Kernel est réellement injoignable. */}
+                        {!integration.kernelReachable && (
                             <p className="text-xs text-mist/50 mt-1">
                                 Vos dépôts restent enregistrés normalement — ils seront archivés dès le rétablissement.
                             </p>
