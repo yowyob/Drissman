@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 050-add-kernel-employee-to-monitors
+      author: drissman
+      changes:
+        # Identifiant de l'employé kernel (module HRM) correspondant au moniteur.
+        # Null = non miroité (org non configurée, service HRM non souscrit, ou
+        # échec best-effort). Sert aussi d'indicateur de synchro côté UI.
+        - addColumn:
+            tableName: monitors
+            columns:
+              - column:
+                  name: kernel_employee_id
+                  type: UUID
+                  constraints:
+                    nullable: true

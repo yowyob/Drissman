@@ -52,6 +52,10 @@ public class Monitor {
     @Column("user_id")
     private UUID userId;
 
+    /** Employé kernel (module HRM) correspondant. Null = non miroité. */
+    @Column("kernel_employee_id")
+    private UUID kernelEmployeeId;
+
     @Column("is_active")
     @Builder.Default
     private Boolean isActive = true;

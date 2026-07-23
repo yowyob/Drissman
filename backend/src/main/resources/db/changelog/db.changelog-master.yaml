@@ -101,3 +101,5 @@ databaseChangeLog:
       file: db/changelog/changes/048-create-school-documents-table.yaml
   - include:
       file: db/changelog/changes/049-add-monitor-to-school-documents.yaml
+  - include:
+      file: db/changelog/changes/050-add-kernel-employee-to-monitors.yaml

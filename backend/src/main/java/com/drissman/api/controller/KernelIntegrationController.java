@@ -45,6 +45,30 @@ public class KernelIntegrationController {
         return yowyobSearchService.searchRaw(q, collection);
     }
 
+    /**
+     * DIAGNOSTIC : services réellement souscrits par l'organisation Drissman.
+     *
+     * KSM n'expose pas cet écran ; or sans souscription au service concerné
+     * (ACCOUNTING, HRM, KYC…), l'organisation existe mais le module reste
+     * inaccessible. Renvoie la réponse du kernel telle quelle.
+     */
+    @GetMapping("/services")
+    public Mono<Object> organizationServices() {
+        String orgId = kernelOrganization.idAsString();
+        if (orgId == null) {
+            return Mono.just(Map.of(
+                    "error", "KERNEL_ORGANIZATION_ID non configuré",
+                    "hint", "renseigner la variable puis redémarrer le backend"));
+        }
+        return kernelClient.get("/api/organizations/" + orgId + "/services",
+                        Map.of("X-Organization-Id", orgId))
+                .timeout(Duration.ofSeconds(10))
+                .map(r -> (Object) r)
+                .onErrorResume(e -> Mono.just(Map.of(
+                        "error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(),
+                        "organizationId", orgId)));
+    }
+
     @GetMapping("/integration")
     public Mono<Map<String, Object>> integration() {
         boolean orgConfigured = kernelOrganization.isConfigured();

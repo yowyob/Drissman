@@ -30,6 +30,7 @@ public class MonitorService {
     private final UserRepository userRepository;
     private final SchoolRepository schoolRepository;
     private final PasswordEncoder passwordEncoder;
+    private final com.drissman.kernel.KernelHrmService kernelHrmService;
 
     @Transactional
     public Mono<MonitorDto> createMonitor(UUID schoolId, CreateMonitorRequest request) {
@@ -72,6 +73,8 @@ public class MonitorService {
                 .build();
 
         return monitorRepository.save(monitor)
+                // Miroir HRM kernel (best-effort) : moniteur -> employé de l'organisation.
+                .doOnNext(kernelHrmService::mirrorMonitorInBackground)
                 .map(this::mapToDto)
                 // Doublon de numéro de permis : erreur métier claire (409) au lieu
                 // d'une 500 brute remontant la contrainte SQL.
