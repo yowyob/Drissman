@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Plus, Search, Trash2, UserX, Eye, EyeOff, Copy, CheckCircle,
-  FileCheck, Upload, Loader2, Clock, XCircle, FileWarning, ExternalLink,
+  FileCheck, Upload, Loader2, Clock, XCircle, FileWarning, ExternalLink, Cloud, CloudOff,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks";
@@ -357,18 +357,35 @@ export default function MonitorsPage() {
                         </p>
                       )}
 
-                      <div className="flex items-center justify-between gap-3">
-                        {fileHref ? (
-                          <a
-                            href={fileHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 text-xs text-mist/70 hover:text-snow transition-colors"
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                            Voir
-                          </a>
-                        ) : <span />}
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          {fileHref && (
+                            <a
+                              href={fileHref}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-xs text-mist/70 hover:text-snow transition-colors"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              Voir
+                            </a>
+                          )}
+                          {item.documentId && (
+                            <span
+                              title={item.kernelSynced
+                                ? "Pièce archivée dans le Document-hub du Kernel"
+                                : "Enregistrée localement ; pas encore archivée dans le Kernel"}
+                              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border ${
+                                item.kernelSynced
+                                  ? "text-emerald-400/90 bg-emerald-500/[0.08] border-emerald-500/20"
+                                  : "text-mist/50 bg-white/[0.03] border-white/[0.08]"
+                              }`}
+                            >
+                              {item.kernelSynced ? <Cloud className="h-3 w-3" /> : <CloudOff className="h-3 w-3" />}
+                              {item.kernelSynced ? "Kernel" : "Local"}
+                            </span>
+                          )}
+                        </div>
                         <input
                           ref={(el) => { docInputsRef.current[item.category] = el; }}
                           type="file"

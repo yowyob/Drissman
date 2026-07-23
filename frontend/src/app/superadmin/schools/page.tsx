@@ -8,7 +8,7 @@ import { backendImageUrl } from "@/lib/admin-offer-service";
 import {
     Loader2, CheckCircle2, XCircle, Building2, MapPin,
     Search, Globe, Phone, Mail, Star, ShieldCheck, ShieldAlert, Ban,
-    FileText, Clock, FileWarning, ExternalLink, ThumbsUp, ThumbsDown,
+    FileText, Clock, FileWarning, ExternalLink, ThumbsUp, ThumbsDown, Cloud, CloudOff,
 } from "lucide-react";
 import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/motion";
 import { toast } from "sonner";
@@ -140,7 +140,7 @@ export default function SuperAdminSchoolsPage() {
                         )}
 
                         {item.documentId ? (
-                            <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center justify-between gap-3 flex-wrap">
                                 {fileHref && (
                                     <a
                                         href={fileHref}
@@ -152,6 +152,19 @@ export default function SuperAdminSchoolsPage() {
                                         Voir
                                     </a>
                                 )}
+                                <span
+                                    title={item.kernelSynced
+                                        ? "Pièce archivée dans le Document-hub du Kernel"
+                                        : "Enregistrée localement ; pas encore archivée dans le Kernel"}
+                                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border ${
+                                        item.kernelSynced
+                                            ? "text-emerald-400/90 bg-emerald-500/[0.08] border-emerald-500/20"
+                                            : "text-mist/50 bg-white/[0.03] border-white/[0.08]"
+                                    }`}
+                                >
+                                    {item.kernelSynced ? <Cloud className="h-3 w-3" /> : <CloudOff className="h-3 w-3" />}
+                                    {item.kernelSynced ? "Kernel" : "Local"}
+                                </span>
                                 <div className="flex items-center gap-2 ml-auto">
                                     <button
                                         onClick={() => handleReview(item.documentId!, "REJECT", forMonitor)}

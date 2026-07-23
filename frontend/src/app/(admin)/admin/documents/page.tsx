@@ -28,6 +28,7 @@ export default function SchoolDocumentsPage() {
     const [items, setItems] = useState<DocumentChecklistItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploadingCat, setUploadingCat] = useState<string | null>(null);
+    const [integration, setIntegration] = useState<KernelIntegrationStatus | null>(null);
     const inputsRef = useRef<Record<string, HTMLInputElement | null>>({});
 
     const fetchChecklist = async () => {
@@ -43,6 +44,12 @@ export default function SchoolDocumentsPage() {
 
     useEffect(() => {
         fetchChecklist();
+        // État d'intégration Kernel — informatif, n'empêche jamais l'affichage.
+        if (token) {
+            schoolDocumentService.getKernelIntegration(token)
+                .then(setIntegration)
+                .catch(() => setIntegration(null));
+        }
     }, [token]);
 
     const handleFile = async (category: string, file: File | undefined) => {
@@ -89,6 +96,38 @@ export default function SchoolDocumentsPage() {
                 </p>
             </div>
 
+            {/* État réel de l'archivage Kernel — visible sans accès serveur. */}
+            {integration && (
+                <div
+                    className={`rounded-2xl px-5 py-3.5 flex items-start gap-3 border ${
+                        integration.mirroringOperational
+                            ? "bg-emerald-500/[0.06] border-emerald-500/20"
+                            : "bg-amber-500/[0.06] border-amber-500/20"
+                    }`}
+                >
+                    {integration.mirroringOperational ? (
+                        <Cloud className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+                    ) : (
+                        <CloudOff className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                    )}
+                    <div className="min-w-0">
+                        <p className={`text-xs font-black uppercase tracking-wider ${
+                            integration.mirroringOperational ? "text-emerald-400" : "text-amber-400"
+                        }`}>
+                            {integration.mirroringOperational
+                                ? "Archivage Kernel actif"
+                                : "Archivage Kernel indisponible"}
+                        </p>
+                        <p className="text-xs text-mist/70 mt-0.5 leading-relaxed">{integration.summary}</p>
+                        {!integration.mirroringOperational && (
+                            <p className="text-xs text-mist/50 mt-1">
+                                Vos dépôts restent enregistrés normalement — ils seront archivés dès le rétablissement.
+                            </p>
+                        )}
+                    </div>
+                </div>
+            )}
+
             <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {items.map((item) => {
                     const meta = STATUS_META[item.status];
@@ -122,17 +161,38 @@ export default function SchoolDocumentsPage() {
                                         </p>
                                     )}
 
-                                    {fileHref && (
-                                        <a
-                                            href={fileHref}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1.5 text-xs text-mist/70 hover:text-snow transition-colors"
-                                        >
-                                            <ExternalLink className="h-3.5 w-3.5" />
-                                            Voir le fichier envoyé
-                                        </a>
-                                    )}
+                                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                                        {fileHref ? (
+                                            <a
+                                                href={fileHref}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1.5 text-xs text-mist/70 hover:text-snow transition-colors"
+                                            >
+                                                <ExternalLink className="h-3.5 w-3.5" />
+                                                Voir le fichier envoyé
+                                            </a>
+                                        ) : <span />}
+
+                                        {/* Archivage Kernel réel de CETTE pièce */}
+                                        {item.documentId && (
+                                            <span
+                                                title={item.kernelSynced
+                                                    ? "Pièce archivée dans le Document-hub du Kernel"
+                                                    : "Enregistrée localement ; pas encore archivée dans le Kernel"}
+                                                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border ${
+                                                    item.kernelSynced
+                                                        ? "text-emerald-400/90 bg-emerald-500/[0.08] border-emerald-500/20"
+                                                        : "text-mist/50 bg-white/[0.03] border-white/[0.08]"
+                                                }`}
+                                            >
+                                                {item.kernelSynced
+                                                    ? <Cloud className="h-3 w-3" />
+                                                    : <CloudOff className="h-3 w-3" />}
+                                                {item.kernelSynced ? "Kernel" : "Local"}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="mt-6 pt-5 border-t border-white/[0.06]">
