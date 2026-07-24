@@ -4,6 +4,7 @@ import com.drissman.kernel.KernelClient;
 import com.drissman.kernel.KernelOrganization;
 import com.drissman.kernel.YowyobSearchService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,6 +33,15 @@ public class KernelIntegrationController {
     private final KernelClient kernelClient;
     private final KernelOrganization kernelOrganization;
     private final YowyobSearchService yowyobSearchService;
+
+    @Value("${kernel.client-id:}")
+    private String clientId;
+
+    @Value("${kernel.tenant-id:}")
+    private String tenantId;
+
+    @Value("${kernel.payment.service-code:}")
+    private String paymentServiceCode;
 
     /**
      * DIAGNOSTIC yowyob-search : renvoie la réponse BRUTE du moteur interrogé
@@ -86,7 +96,34 @@ public class KernelIntegrationController {
         // Le mirroring org-scopé (compta, document-hub, ressources) exige les deux.
         out.put("mirroringOperational", reachable && orgConfigured);
         out.put("summary", summary(reachable, orgConfigured));
+        // Config EFFECTIVE de production, autrement illisible sans accès SSH.
+        // Ni clé ni identifiant complet : seulement de quoi diagnostiquer un
+        // mauvais préfixe d'URL ou un tenant inattendu.
+        out.put("config", config());
         return out;
+    }
+
+    /** Configuration kernel effective (sans secret) — diagnostic sans SSH. */
+    private Map<String, Object> config() {
+        Map<String, Object> cfg = new LinkedHashMap<>();
+        cfg.put("baseUrl", kernelClient.baseUrl());
+        cfg.put("clientIdConfigured", clientId != null && !clientId.isBlank());
+        // Préfixe seul : suffit à distinguer l'ancien tenant (11111111…)
+        // du nouveau (94b5ac75…) sans divulguer l'identifiant complet.
+        cfg.put("tenantPrefix", prefix(tenantId));
+        cfg.put("organizationPrefix", prefix(kernelOrganization.idAsString()));
+        cfg.put("paymentServiceCode",
+                paymentServiceCode == null || paymentServiceCode.isBlank()
+                        ? "(omis)" : paymentServiceCode);
+        return cfg;
+    }
+
+    private static String prefix(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String v = value.trim();
+        return (v.length() <= 8 ? v : v.substring(0, 8)) + "…";
     }
 
     private String summary(boolean reachable, boolean orgConfigured) {

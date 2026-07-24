@@ -41,6 +41,9 @@ public class UserService {
                     if (request.getEmail() != null) {
                         user.setEmail(request.getEmail());
                     }
+                    if (request.getAvatarUrl() != null) {
+                        user.setAvatarUrl(request.getAvatarUrl());
+                    }
                     return userRepository.save(user);
                 })
                 .map(this::toDto);
@@ -66,6 +69,7 @@ public class UserService {
                 .lastName(user.getLastName())
                 .role(user.getRole() != null ? user.getRole().name() : null)
                 .schoolId(user.getSchoolId())
+                .avatarUrl(user.getAvatarUrl())
                 .build();
     }
 }

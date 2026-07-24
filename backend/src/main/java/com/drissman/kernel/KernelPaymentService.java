@@ -69,8 +69,12 @@ public class KernelPaymentService {
     private Mono<PaymentOrder> createOrder(String provider, String method, long amount, String payerReference,
                                            String description, String idempotencyKey) {
         Map<String, Object> body = new HashMap<>();
-        body.put("clientId", clientId);
-        body.put("serviceCode", serviceCode);
+        // clientId / serviceCode ne sont envoyés que s'ils sont renseignés :
+        // le kernel identifie déjà l'appelant par les en-têtes machine, et un
+        // serviceCode non souscrit fait rejeter l'ordre. Les omettre reproduit
+        // l'appel minimal qui encaisse réellement (cf. KERNEL_PAYMENT_SERVICE_CODE).
+        if (clientId != null && !clientId.isBlank()) body.put("clientId", clientId);
+        if (serviceCode != null && !serviceCode.isBlank()) body.put("serviceCode", serviceCode);
         body.put("idempotencyKey", idempotencyKey);
         body.put("amount", amount);
         body.put("currency", currency);

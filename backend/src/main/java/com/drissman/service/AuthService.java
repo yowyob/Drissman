@@ -202,6 +202,7 @@ public class AuthService {
                         .lastName(user.getLastName())
                         .role(user.getRole().name())
                         .schoolId(user.getSchoolId())
+                        .avatarUrl(user.getAvatarUrl())
                         .build())
                 .token(token)
                 .build();

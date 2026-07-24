@@ -18,4 +18,5 @@ public class UserDto {
     private String lastName;
     private String role;
     private UUID schoolId;
+    private String avatarUrl;
 }

@@ -23,6 +23,7 @@ import java.util.Map;
 public class KernelClient {
 
     private final WebClient webClient;
+    private final String baseUrl;
 
     public KernelClient(
             WebClient.Builder builder,
@@ -30,6 +31,7 @@ public class KernelClient {
             @Value("${kernel.client-id}") String clientId,
             @Value("${kernel.api-key}") String apiKey,
             @Value("${kernel.tenant-id}") String tenantId) {
+        this.baseUrl = baseUrl;
         this.webClient = builder
                 .baseUrl(baseUrl)
                 .defaultHeader("X-Client-Id", clientId)
@@ -37,6 +39,11 @@ public class KernelClient {
                 .defaultHeader("X-Tenant-Id", tenantId)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
+    }
+
+    /** Base-url configurée — exposée pour les diagnostics (sans secret). */
+    public String baseUrl() {
+        return baseUrl;
     }
 
     public Mono<KernelResponse> get(String path) {

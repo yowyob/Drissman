@@ -21,4 +21,6 @@ public class UpdateProfileRequest {
 
     @Email(message = "Format d'email invalide")
     private String email;
+
+    private String avatarUrl;
 }
