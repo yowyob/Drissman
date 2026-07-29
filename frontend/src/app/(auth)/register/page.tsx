@@ -54,7 +54,7 @@ export default function RegisterPage() {
                 secretCode: accountType === "SUPER_ADMIN" ? secretCode : undefined,
             });
             toast.success("Compte créé avec succès !");
-            switch (response.user.role) {
+            switch (response?.user?.role) {
                 case "SCHOOL_ADMIN":
                     router.push("/admin");
                     break;

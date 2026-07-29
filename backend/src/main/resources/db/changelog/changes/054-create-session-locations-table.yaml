@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: 054-create-session-locations-table
+      author: drissman
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: session_locations
+      changes:
+        - createTable:
+            tableName: session_locations
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: session_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_session_locations_session
+                    references: sessions(id)
+              - column:
+                  name: vehicle_id
+                  type: uuid
+              - column:
+                  name: latitude
+                  type: DOUBLE PRECISION
+                  constraints:
+                    nullable: false
+              - column:
+                  name: longitude
+                  type: DOUBLE PRECISION
+                  constraints:
+                    nullable: false
+              - column:
+                  name: speed
+                  type: DOUBLE PRECISION
+              - column:
+                  name: heading
+                  type: DOUBLE PRECISION
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_session_locations_session_created
+            tableName: session_locations
+            columns:
+              - column: { name: session_id }
+              - column: { name: created_at }

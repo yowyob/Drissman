@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -16,11 +17,10 @@ import java.util.UUID;
 @AllArgsConstructor
 public class CreateSessionRequest {
 
-    @NotNull(message = "L'ID de l'inscription est obligatoire")
-    private UUID enrollmentId;
+    private List<UUID> offerIds;
 
     // Optional at creation time
-    private UUID monitorId;
+    private List<UUID> monitorIds;
 
     @NotNull(message = "La date est obligatoire")
     private LocalDate date;

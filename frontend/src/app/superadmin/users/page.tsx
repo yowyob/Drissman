@@ -76,7 +76,7 @@ export default function SuperAdminUsersPage() {
                 user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (user.phone && user.phone.includes(searchTerm));
             
-            const matchesRole = roleFilter === "all" || user.role === roleFilter;
+            const matchesRole = roleFilter === "all" || user?.role === roleFilter;
 
             const matchesStatus = 
                 statusFilter === "all" || 

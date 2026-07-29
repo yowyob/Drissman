@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 048-fix-uuid-defaults
+      author: antigravity
+      changes:
+        - addDefaultValue:
+            tableName: offer_monitors
+            columnName: id
+            columnDataType: uuid
+            defaultValueComputed: gen_random_uuid()
+        - addDefaultValue:
+            tableName: session_course_offers
+            columnName: id
+            columnDataType: uuid
+            defaultValueComputed: gen_random_uuid()
+        - addDefaultValue:
+            tableName: session_monitors
+            columnName: id
+            columnDataType: uuid
+            defaultValueComputed: gen_random_uuid()

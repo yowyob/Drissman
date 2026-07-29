@@ -47,10 +47,7 @@ public class KernelHrmService {
         }
         userRepository.findById(monitor.getUserId())
                 .flatMap(user -> mirrorMonitor(user, monitor))
-                .flatMap(employeeId -> {
-                    monitor.setKernelEmployeeId(employeeId);
-                    return monitorRepository.save(monitor);
-                })
+                .then()
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe(v -> {}, e -> log.debug("Miroir HRM indisponible pour moniteur {} : {}",
                         monitor.getId(), e.getMessage()));

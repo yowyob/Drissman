@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -16,8 +17,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class SessionDto {
     private UUID id;
-    private UUID enrollmentId;
-    private UUID monitorId;
+    private List<UUID> offerIds;
+    private List<UUID> monitorIds;
     private UUID moduleId;
     private UUID lessonId;
     private LocalDate date;

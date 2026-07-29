@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-documents-table
+      author: ai-assistant
+      validCheckSum: "ANY"
+      changes:
+        - createTable:
+            tableName: documents
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: school_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: uploader_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: enrollment_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: file_type
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: file_url
+                  type: varchar(1024)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: file_size
+                  type: varchar(50)
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false

@@ -18,6 +18,7 @@ public class MonitorDto {
     private String schoolName;
     private String firstName;
     private String lastName;
+    private String email;
     private String licenseNumber;
     private String phoneNumber;
     private UUID userId; // Linked user account ID (can login)

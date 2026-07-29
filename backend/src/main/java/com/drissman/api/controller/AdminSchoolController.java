@@ -3,15 +3,14 @@ package com.drissman.api.controller;
 import com.drissman.api.dto.PartnerStatsDto;
 import com.drissman.api.dto.UpdateSchoolRequest;
 import com.drissman.api.dto.AdminDashboardDto;
+import com.drissman.api.dto.SchoolDto;
 import com.drissman.domain.repository.UserRepository;
 
 import com.drissman.service.AdminSchoolService;
 import com.drissman.service.SchoolService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import java.security.Principal;
@@ -45,10 +44,17 @@ public class AdminSchoolController {
 
     @GetMapping("/stats")
     public Mono<PartnerStatsDto> getStats(Principal principal) {
-        // Plus de "demo mode" : un appel non authentifié est refusé, jamais
-        // servi avec des chiffres fictifs.
+        // Demo mode: return mock stats if no authenticated user
         if (principal == null) {
-            return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentification requise"));
+            log.info("Demo mode: returning mock stats");
+            return Mono.just(PartnerStatsDto.builder()
+                    .revenue("2,450,000 FCFA")
+                    .enrollments(127)
+                    .successRate("94%")
+                    .upcomingLessons(23)
+                    .revenueGrowth(12.0)
+                    .enrollmentGrowth(8)
+                    .build());
         }
 
         log.info("Fetching stats for user: {}", principal.getName());
@@ -83,6 +89,18 @@ public class AdminSchoolController {
                         return Mono.empty();
                     return schoolService.update(user.getSchoolId(), request)
                             .then();
+                });
+    }
+
+    @GetMapping("/profile")
+    public Mono<SchoolDto> getAdminSchoolProfile(Principal principal) {
+        if (principal == null) return Mono.empty();
+        
+        UUID userId = UUID.fromString(principal.getName());
+        return userRepository.findById(userId)
+                .flatMap(user -> {
+                    if (user.getSchoolId() == null) return Mono.empty();
+                    return schoolService.findById(user.getSchoolId());
                 });
     }
 

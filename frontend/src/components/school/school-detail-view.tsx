@@ -98,7 +98,7 @@ export function SchoolDetailView({ school }: SchoolDetailViewProps) {
         if (!user) return;
         let effectiveUser = user;
         let effectiveToken = token;
-        if (user.role === "VISITOR") {
+        if (user?.role === "VISITOR") {
             try {
                 const upgraded = await upgradeVisitor({ targetRole: "CANDIDAT" });
                 effectiveUser = upgraded.user;

@@ -15,7 +15,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.beans.factory.annotation.Value;
 import reactor.core.publisher.Mono;
+
+import com.drissman.api.dto.GoogleLoginRequest;
+import com.drissman.api.dto.GoogleTokenInfo;
 
 @Service
 @RequiredArgsConstructor
@@ -26,9 +31,13 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final KernelAuthService kernelAuthService;
+    private final WebClient.Builder webClientBuilder;
 
-    @org.springframework.beans.factory.annotation.Value("${app.superadmin.secret:DRISSMAN_SUPER_SECRET}")
+    @Value("${app.superadmin.secret:DRISSMAN_SUPER_SECRET}")
     private String superAdminSecret;
+
+    @Value("${google.client.id}")
+    private String googleClientId;
 
     public Mono<AuthResponse> register(RegisterRequest request) {
         return userRepository.existsByEmail(request.getEmail())
@@ -60,7 +69,7 @@ public class AuthService {
                                 .build();
 
                         return userRepository.save(user)
-                                .map(this::authenticated);
+                                .flatMap(this::authenticated);
                     }
 
                     if (userRole == User.Role.SCHOOL_ADMIN) {
@@ -84,7 +93,7 @@ public class AuthService {
                                             .build();
                                     return userRepository.save(user);
                                 })
-                                .map(this::authenticated);
+                                .flatMap(this::authenticated);
                     } else {
                         // VISITOR/CANDIDAT/MONITOR: simple user creation without school
                         User user = User.builder()
@@ -97,7 +106,7 @@ public class AuthService {
                                 .build();
 
                         return userRepository.save(user)
-                                .map(this::authenticated);
+                                .flatMap(this::authenticated);
                     }
                 });
     }
@@ -117,14 +126,14 @@ public class AuthService {
                         return Mono.error(new RuntimeException("Rôle cible invalide"));
                     }
 
-                    if (targetRole != User.Role.CANDIDAT && targetRole != User.Role.SCHOOL_ADMIN) {
-                        return Mono.error(new RuntimeException("Le compte visiteur peut devenir CANDIDAT ou SCHOOL_ADMIN"));
+                    if (targetRole != User.Role.CANDIDAT && targetRole != User.Role.STUDENT && targetRole != User.Role.SCHOOL_ADMIN) {
+                        return Mono.error(new RuntimeException("Le compte visiteur peut devenir STUDENT (ou CANDIDAT) ou SCHOOL_ADMIN"));
                     }
 
-                    if (targetRole == User.Role.CANDIDAT) {
-                        user.setRole(User.Role.CANDIDAT);
+                    if (targetRole == User.Role.CANDIDAT || targetRole == User.Role.STUDENT) {
+                        user.setRole(targetRole);
                         user.setSchoolId(null);
-                        return userRepository.save(user).map(this::authenticated);
+                        return userRepository.save(user).flatMap(this::authenticated);
                     }
 
                     School school = School.builder()
@@ -141,7 +150,7 @@ public class AuthService {
                                 user.setSchoolId(savedSchool.getId());
                                 return userRepository.save(user);
                             })
-                            .map(this::authenticated);
+                            .flatMap(this::authenticated);
                 });
     }
 
@@ -161,30 +170,70 @@ public class AuthService {
                             && passwordEncoder.matches(trimmedPassword, storedPassword);
 
                     if (matchesRaw || matchesTrimmed) {
-                        return Mono.just(authenticated(user));
+                        return authenticated(user);
                     }
 
                     // Backward compatibility for legacy rows stored in plain text.
                     if (!rawPassword.isEmpty() && rawPassword.equals(storedPassword)) {
                         user.setPassword(passwordEncoder.encode(rawPassword));
-                        return userRepository.save(user).map(this::authenticated);
+                        return userRepository.save(user).flatMap(this::authenticated);
                     }
                     if (!trimmedPassword.isEmpty() && trimmedPassword.equals(storedPassword)) {
                         user.setPassword(passwordEncoder.encode(trimmedPassword));
-                        return userRepository.save(user).map(this::authenticated);
+                        return userRepository.save(user).flatMap(this::authenticated);
                     }
 
                     return Mono.error(new RuntimeException("Invalid credentials"));
                 });
     }
 
+    public Mono<AuthResponse> loginWithGoogle(GoogleLoginRequest request) {
+        return webClientBuilder.build()
+                .get()
+                .uri("https://oauth2.googleapis.com/tokeninfo?id_token=" + request.getIdToken())
+                .retrieve()
+                .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+                        response -> Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token Google invalide")))
+                .bodyToMono(GoogleTokenInfo.class)
+                .flatMap(tokenInfo -> {
+                    if (tokenInfo.getAud() == null || !tokenInfo.getAud().equals(googleClientId)) {
+                        return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token Google non destiné à cette application"));
+                    }
+                    
+                    String email = tokenInfo.getEmail() != null ? tokenInfo.getEmail().trim().toLowerCase() : "";
+                    if (email.isEmpty()) {
+                        return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email introuvable dans le token Google"));
+                    }
+
+                    return userRepository.findFirstByEmailIgnoreCase(email)
+                            .switchIfEmpty(Mono.defer(() -> {
+                                User newUser = User.builder()
+                                        .email(email)
+                                        .password(passwordEncoder.encode(java.util.UUID.randomUUID().toString()))
+                                        .firstName(tokenInfo.getGivenName() != null ? tokenInfo.getGivenName() : (tokenInfo.getName() != null ? tokenInfo.getName() : "Utilisateur"))
+                                        .lastName(tokenInfo.getFamilyName() != null ? tokenInfo.getFamilyName() : "")
+                                        .role(User.Role.VISITOR)
+                                        .build();
+                                return userRepository.save(newUser);
+                            }))
+                            .flatMap(this::authenticated);
+                });
+    }
+
     /**
-     * Réponse d'authentification + synchronisation kernel en arrière-plan
-     * (compte-miroir + token 15 min). Best-effort : ne bloque jamais le login.
+     * Réponse d'authentification + synchronisation kernel.
+     * Attend la synchro pour pouvoir intercepter l'erreur de vérification d'email.
      */
-    private AuthResponse authenticated(User user) {
-        kernelAuthService.syncUserInBackground(user);
-        return createAuthResponse(user);
+    private Mono<AuthResponse> authenticated(User user) {
+        return kernelAuthService.syncUser(user)
+                .thenReturn(createAuthResponse(user))
+                .onErrorResume(e -> {
+                    if (e.getMessage() != null && e.getMessage().contains("EMAIL_VERIFICATION_REQUIRED")) {
+                        return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "EMAIL_VERIFICATION_REQUIRED"));
+                    }
+                    // Si le kernel plante pour une autre raison, on laisse passer (best-effort)
+                    return Mono.just(createAuthResponse(user));
+                });
     }
 
     private AuthResponse createAuthResponse(User user) {

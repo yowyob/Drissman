@@ -25,6 +25,7 @@ import com.drissman.api.dto.AdminDashboardDto;
 import com.drissman.api.dto.RecentActivityDto;
 import com.drissman.api.dto.UpcomingSessionDto;
 import com.drissman.domain.repository.ModuleRepository;
+import com.drissman.domain.repository.SessionMonitorRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +38,7 @@ public class AdminSchoolService {
         private final InvoiceRepository invoiceRepository;
         private final ModuleRepository moduleRepository;
         private final MonitorRepository monitorRepository;
+        private final SessionMonitorRepository sessionMonitorRepository;
 
         public Mono<PartnerStatsDto> getStats(UUID schoolId) {
                 if (schoolId == null) {
@@ -118,26 +120,21 @@ public class AdminSchoolService {
                                                                 : java.time.LocalTime.MIN))
                                 .take(5)
                                 .flatMap(s -> {
-                                        Mono<String> studentNameMono = enrollmentRepository
-                                                        .findById(s.getEnrollmentId())
-                                                        .flatMap(e -> userRepository.findById(e.getUserId()))
-                                                        .map(u -> u.getFirstName() + " " + u.getLastName())
-                                                        .defaultIfEmpty("Élève inconnu");
+                                        Mono<String> studentNameMono = s.getEnrollmentId() != null 
+                                                        ? enrollmentRepository.findById(s.getEnrollmentId())
+                                                            .flatMap(e -> userRepository.findById(e.getUserId()))
+                                                            .map(u -> u.getFirstName() + " " + u.getLastName())
+                                                            .defaultIfEmpty("Élève inconnu")
+                                                        : Mono.just("Classe collective");
 
-                                        Mono<String> monitorNameMono = s.getMonitorId() != null
-                                                        ? monitorRepository.findById(s.getMonitorId())
-                                                                        .flatMap(monitor -> monitor.getUserId() != null
-                                                                                        ? userRepository.findById(
-                                                                                                        monitor.getUserId())
-                                                                                                        .map(u -> u.getFirstName()
-                                                                                                                        + " "
-                                                                                                                        + u.getLastName())
-                                                                                        : Mono.just(
-                                                                                                        monitor.getFirstName()
-                                                                                                                        + " "
-                                                                                                                        + monitor.getLastName()))
-                                                                        .defaultIfEmpty("Non assigné")
-                                                        : Mono.just("Non assigné");
+                                        Mono<String> monitorNameMono = sessionMonitorRepository.findBySessionId(s.getId())
+                                                        .next()
+                                                        .flatMap(sm -> monitorRepository.findById(sm.getMonitorId()))
+                                                        .flatMap(monitor -> monitor.getUserId() != null
+                                                                        ? userRepository.findById(monitor.getUserId())
+                                                                                        .map(u -> u.getFirstName() + " " + u.getLastName())
+                                                                        : Mono.just(monitor.getFirstName() + " " + monitor.getLastName()))
+                                                        .defaultIfEmpty("Non assigné");
 
                                         return Mono.zip(studentNameMono, monitorNameMono)
                                                         .map(names -> UpcomingSessionDto.builder()

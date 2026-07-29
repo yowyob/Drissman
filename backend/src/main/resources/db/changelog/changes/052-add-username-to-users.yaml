@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: 052-add-username-to-users
+      author: antigravity
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: users
+                columnName: username
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  type: varchar(100)
+        - update:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  valueComputed: "LOWER(SPLIT_PART(email, '@', 1))"
+            where: "username IS NULL AND email IS NOT NULL AND email LIKE '%@%'"
+        - createIndex:
+            indexName: idx_users_username
+            tableName: users
+            unique: true
+            columns:
+              - column:
+                  name: username

@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,16 +44,10 @@ class PaymentServiceTest {
         private UserRepository userRepository;
 
         @Mock
-        private com.drissman.payment.YowyobPaymentClient yowyobPaymentClient;
-
-        @Mock
-        private com.drissman.kernel.KernelPaymentService kernelPaymentService;
+        private com.drissman.kernel.KernelPaymentGatewayClient kernelPaymentGatewayClient;
 
         @Mock
         private com.drissman.kernel.KernelAccountingService kernelAccountingService;
-
-        @Mock
-        private com.drissman.kernel.KernelNotificationService kernelNotificationService;
 
         @InjectMocks
         private PaymentService paymentService;
@@ -94,6 +89,10 @@ class PaymentServiceTest {
                                 .thenReturn(Mono.just(Offer.builder().id(offerId).price(250000).build()));
                 when(invoiceRepository.save(any(Invoice.class)))
                                 .thenAnswer(inv -> Mono.just(inv.getArgument(0, Invoice.class)));
+                when(kernelPaymentGatewayClient.initiatePayment(any(String.class), anyLong(), any(String.class), any(String.class), any(String.class), any(String.class)))
+                                .thenReturn(Mono.just(com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.objectNode()
+                                        .put("id", "tx-123")
+                                        .put("redirectUrl", "http://test.com")));
 
                 StepVerifier.create(paymentService.initiate(userId, request("ORANGE_MONEY", "+237691234567")))
                                 .assertNext(dto -> {

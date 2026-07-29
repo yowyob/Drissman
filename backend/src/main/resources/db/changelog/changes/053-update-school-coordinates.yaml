@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: 053-update-school-coordinates
+      author: drissman
+      changes:
+        - update:
+            tableName: schools
+            where: id = 'd1111111-1111-1111-1111-111111111111'
+            columns:
+              - column: { name: latitude, valueNumeric: 3.8520 }
+              - column: { name: longitude, valueNumeric: 11.5050 }
+        - update:
+            tableName: schools
+            where: id = 'd2222222-2222-2222-2222-222222222222'
+            columns:
+              - column: { name: latitude, valueNumeric: 4.0480 }
+              - column: { name: longitude, valueNumeric: 9.6930 }
+        - update:
+            tableName: schools
+            where: id = 'd3333333-3333-3333-3333-333333333333'
+            columns:
+              - column: { name: latitude, valueNumeric: 3.8710 }
+              - column: { name: longitude, valueNumeric: 11.4980 }
+        - update:
+            tableName: schools
+            where: id = 'd4444444-4444-4444-4444-444444444444'
+            columns:
+              - column: { name: latitude, valueNumeric: 4.0420 }
+              - column: { name: longitude, valueNumeric: 9.6890 }
+        - update:
+            tableName: schools
+            where: id = 'd5555555-5555-5555-5555-555555555555'
+            columns:
+              - column: { name: latitude, valueNumeric: 3.8900 }
+              - column: { name: longitude, valueNumeric: 11.5150 }

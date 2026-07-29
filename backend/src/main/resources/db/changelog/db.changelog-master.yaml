@@ -94,12 +94,27 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/045-monitor-license-nullable.yaml
   - include:
-      file: db/changelog/changes/046-purge-demo-data.yaml
+      file: db/changelog/changes/046-offer-monitors-and-session-offers.yaml
   - include:
-      file: db/changelog/changes/047-add-governance-to-schools.yaml
+      file: db/changelog/changes/047-session-monitors.yaml
   - include:
-      file: db/changelog/changes/048-create-school-documents-table.yaml
+      file: db/changelog/changes/048-fix-uuid-defaults.yaml
   - include:
-      file: db/changelog/changes/049-add-monitor-to-school-documents.yaml
+      file: db/changelog/changes/049-notifications.yaml
   - include:
-      file: db/changelog/changes/050-add-kernel-employee-to-monitors.yaml
+      file: db/changelog/changes/050-create-documents.yaml
+  - include:
+      file: db/changelog/changes/050-add-neighborhood-to-schools.yaml
+  - include:
+      file: db/changelog/changes/051-create-chat-messages.yaml
+  - include:
+      file: db/changelog/changes/052-add-username-to-users.yaml
+  - include:
+      file: db/changelog/changes/053-update-school-coordinates.yaml
+  - include:
+      file: db/changelog/changes/054-create-session-locations-table.yaml
+  - include:
+      file: db/changelog/changes/055-delete-mock-offers-and-demo-data.yaml
+  - include:
+      file: db/changelog/changes/056-delete-mock-schools.yaml
+

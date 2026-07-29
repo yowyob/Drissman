@@ -37,28 +37,24 @@ public class KernelResourceService {
 
     private final KernelClient kernelClient;
     private final KernelAuthService kernelAuthService;
+    private final SchoolRepository schoolRepository;
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
-    private final KernelOrganization kernelOrganization;
 
     /** Crée la Resource kernel du véhicule et mémorise son id. */
     public void mirrorVehicleInBackground(Vehicle vehicle) {
-        if (vehicle.getKernelResourceId() != null) {
-            KernelMirrorLog.skip("vehicle-resource", vehicle.getPlateNumber(), "déjà reflété dans le kernel");
-            return;
-        }
         mirrorVehicle(vehicle)
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe(
                         v -> {
-                        }, // succès loggé dans mirrorVehicle() ; skips loggés dans schoolContext()
-                        e -> KernelMirrorLog.fail("vehicle-resource", vehicle.getPlateNumber(), e));
+                        },
+                        e -> log.info("Reflet kernel du véhicule {} indisponible : {}",
+                                vehicle.getPlateNumber(), e.getMessage()));
     }
 
     /** Pousse la position GPS vers l'historique kernel du véhicule. */
     public void pushPositionInBackground(Vehicle vehicle) {
         if (vehicle.getKernelResourceId() == null || vehicle.getLatitude() == null) {
-            KernelMirrorLog.trace("gps-observation", vehicle.getPlateNumber(), "SKIP:non-reflété-ou-sans-position");
             return;
         }
         schoolContext(vehicle.getSchoolId())
@@ -68,8 +64,10 @@ public class KernelResourceService {
                         KernelClient.bearerWithOrganization(ctx.getT2(), ctx.getT1().toString())))
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe(
-                        r -> KernelMirrorLog.trace("gps-observation", vehicle.getPlateNumber(), "OK"),
-                        e -> KernelMirrorLog.fail("gps-observation", vehicle.getPlateNumber(), e));
+                        r -> {
+                        },
+                        e -> log.debug("Observation GPS kernel indisponible pour {} : {}",
+                                vehicle.getPlateNumber(), e.getMessage()));
     }
 
     Mono<Void> mirrorVehicle(Vehicle vehicle) {
@@ -111,44 +109,26 @@ public class KernelResourceService {
                             ? response.getData().path("id").asText(null)
                             : null;
                     if (resourceId == null) {
-                        KernelMirrorLog.skip("vehicle-resource", vehicle.getPlateNumber(),
-                                "réponse kernel sans id de resource");
                         return Mono.empty();
                     }
                     vehicle.setKernelResourceId(UUID.fromString(resourceId));
-                    KernelMirrorLog.ok("vehicle-resource", vehicle.getPlateNumber(), resourceId);
+                    log.info("Véhicule {} reflété dans resource-core : {}",
+                            vehicle.getPlateNumber(), resourceId);
                     return vehicleRepository.save(vehicle).then();
                 });
     }
 
     /**
      * Contexte kernel d'une école : (organizationId, token admin).
-     * Vide si l'école n'est pas provisionnée ou si aucun token n'est possible —
-     * chaque cause de "vide" est tracée (SKIP) pour rester monitorable.
+     * Vide si l'école n'est pas provisionnée ou si aucun token n'est possible.
      */
     private Mono<reactor.util.function.Tuple2<UUID, String>> schoolContext(UUID schoolId) {
-        // MODÈLE A : organisation UNIQUE de Drissman (les écoles ne sont pas des
-        // organisations kernel) ; le bearer reste le token-miroir de l'admin école.
-        UUID orgId = kernelOrganization.id().orElse(null);
-        if (orgId == null) {
-            KernelMirrorLog.skip("school-context", schoolId,
-                    "KERNEL_ORGANIZATION_ID non configuré (organisation Drissman)");
-            return Mono.empty();
-        }
-        return userRepository
-                .findFirstBySchoolIdAndRole(schoolId, User.Role.SCHOOL_ADMIN)
-                .switchIfEmpty(Mono.defer(() -> {
-                    KernelMirrorLog.skip("school-context", schoolId,
-                            "aucun SCHOOL_ADMIN pour obtenir un token-miroir");
-                    return Mono.<User>empty();
-                }))
-                .flatMap(admin -> kernelAuthService.ensureToken(admin)
-                        .switchIfEmpty(Mono.defer(() -> {
-                            KernelMirrorLog.skip("school-context", schoolId,
-                                    "token-miroir kernel indisponible (miroir non vérifié ou kernel injoignable)");
-                            return Mono.<String>empty();
-                        }))
-                        .map(token -> Tuples.of(orgId, token)));
+        return schoolRepository.findById(schoolId)
+                .filter(school -> school.getKernelOrganizationId() != null)
+                .flatMap(school -> userRepository
+                        .findFirstBySchoolIdAndRole(schoolId, User.Role.SCHOOL_ADMIN)
+                        .flatMap(kernelAuthService::ensureToken)
+                        .map(token -> Tuples.of(school.getKernelOrganizationId(), token)));
     }
 
     private String resourceCode(Vehicle vehicle) {

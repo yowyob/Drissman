@@ -1,0 +1,125 @@
+databaseChangeLog:
+  - changeSet:
+      id: 046-offer-monitors-table
+      author: antigravity
+      changes:
+        - createTable:
+            tableName: offer_monitors
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: offer_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: monitor_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: datetime
+                  defaultValueComputed: CURRENT_TIMESTAMP
+            
+        - addForeignKeyConstraint:
+            baseTableName: offer_monitors
+            baseColumnNames: offer_id
+            constraintName: fk_offer_monitors_offer
+            referencedTableName: offers
+            referencedColumnNames: id
+            onDelete: CASCADE
+            
+        - addForeignKeyConstraint:
+            baseTableName: offer_monitors
+            baseColumnNames: monitor_id
+            constraintName: fk_offer_monitors_monitor
+            referencedTableName: monitors
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 046-session-course-offers-table
+      author: antigravity
+      changes:
+        - createTable:
+            tableName: session_course_offers
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: session_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: offer_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: datetime
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  
+        - addForeignKeyConstraint:
+            baseTableName: session_course_offers
+            baseColumnNames: session_id
+            constraintName: fk_sco_session
+            referencedTableName: sessions
+            referencedColumnNames: id
+            onDelete: CASCADE
+            
+        - addForeignKeyConstraint:
+            baseTableName: session_course_offers
+            baseColumnNames: offer_id
+            constraintName: fk_sco_offer
+            referencedTableName: offers
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 046-modify-sessions-enrollment-nullable
+      author: antigravity
+      changes:
+        - dropNotNullConstraint:
+            tableName: sessions
+            columnName: enrollment_id
+            columnDataType: uuid
+        - addColumn:
+            tableName: sessions
+            columns:
+              - column:
+                  name: school_id
+                  type: uuid
+        - sql:
+            dbms: postgresql
+            sql: |
+              UPDATE sessions s SET school_id = (SELECT e.school_id FROM enrollments e WHERE e.id = s.enrollment_id);
+
+  - changeSet:
+      id: 046-auto-assign-monitors-to-existing-offers
+      author: antigravity
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              -- Assign existing offers to an existing monitor of the same school if available
+              INSERT INTO offer_monitors (id, offer_id, monitor_id, created_at)
+              SELECT 
+                gen_random_uuid(),
+                o.id,
+                (SELECT m.id FROM monitors m WHERE m.school_id = o.school_id AND m.status = 'ACTIVE' LIMIT 1),
+                NOW()
+              FROM offers o
+              WHERE EXISTS (SELECT 1 FROM monitors m WHERE m.school_id = o.school_id AND m.status = 'ACTIVE')
+              AND NOT EXISTS (SELECT 1 FROM offer_monitors om WHERE om.offer_id = o.id);

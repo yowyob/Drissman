@@ -9,9 +9,7 @@ import com.drissman.domain.repository.InvoiceRepository;
 import com.drissman.domain.repository.OfferRepository;
 import com.drissman.domain.repository.UserRepository;
 import com.drissman.kernel.KernelAccountingService;
-import com.drissman.kernel.KernelNotificationService;
-import com.drissman.kernel.KernelPaymentService;
-import com.drissman.payment.YowyobPaymentClient;
+import com.drissman.kernel.KernelPaymentGatewayClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -44,10 +42,8 @@ public class PaymentService {
     private final EnrollmentRepository enrollmentRepository;
     private final OfferRepository offerRepository;
     private final UserRepository userRepository;
-    private final YowyobPaymentClient yowyobPaymentClient;
-    private final KernelPaymentService kernelPaymentService;
+    private final KernelPaymentGatewayClient kernelPaymentGatewayClient;
     private final KernelAccountingService kernelAccountingService;
-    private final KernelNotificationService kernelNotificationService;
 
     public Mono<PaymentDto> initiate(UUID userId, InitiatePaymentRequest request) {
         Invoice.PaymentMethod method;
@@ -69,15 +65,21 @@ public class PaymentService {
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN,
                         "Cette inscription ne vous appartient pas")))
                 .flatMap(enrollment -> invoiceRepository.findByEnrollmentId(enrollment.getId())
-                        .filter(inv -> inv.getStatus() == Invoice.InvoiceStatus.PENDING
-                                || inv.getStatus() == Invoice.InvoiceStatus.PAID)
-                        .hasElements()
-                        .flatMap(exists -> {
-                            if (exists) {
+                        .collectList()
+                        .flatMap(invoices -> {
+                            boolean alreadyPaid = invoices.stream().anyMatch(inv -> inv.getStatus() == Invoice.InvoiceStatus.PAID);
+                            if (alreadyPaid) {
                                 return Mono.error(new ResponseStatusException(HttpStatus.CONFLICT,
-                                        "Un paiement est déjà en cours ou effectué pour cette inscription"));
+                                        "Un paiement a déjà été effectué pour cette inscription"));
                             }
-                            return createInvoice(enrollment, method, request.getPhone());
+                            // Marquer les factures PENDING précédentes en FAILED pour permettre une nouvelle tentative
+                            return Flux.fromIterable(invoices)
+                                    .filter(inv -> inv.getStatus() == Invoice.InvoiceStatus.PENDING)
+                                    .flatMap(inv -> {
+                                        inv.setStatus(Invoice.InvoiceStatus.FAILED);
+                                        return invoiceRepository.save(inv);
+                                    })
+                                    .then(createInvoice(enrollment, method, request.getPhone()));
                         }))
                 .map(this::toDto);
     }
@@ -98,52 +100,31 @@ public class PaymentService {
                             .createdAt(LocalDateTime.now())
                             .build();
 
-                    // Paiement par carte : transaction Stripe Checkout via le
-                    // service Yowyob Payment (l'URL est retournée au candidat).
-                    if (method == Invoice.PaymentMethod.CARD) {
-                        if (!yowyobPaymentClient.isConfigured()) {
-                            return Mono.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                                    "Le paiement par carte n'est pas disponible pour le moment"));
-                        }
-                        return yowyobPaymentClient.startCardPayment(invoice.getAmount())
-                                .flatMap(tx -> {
-                                    invoice.setProviderReference(tx.path("reference").asText(null));
-                                    return invoiceRepository.save(invoice)
-                                            .map(saved -> {
-                                                checkoutUrls.put(saved.getId(),
-                                                        tx.path("stripeCheckoutUrl").asText(null));
-                                                return saved;
-                                            });
-                                })
-                                .onErrorResume(e -> e instanceof ResponseStatusException ? Mono.error(e)
-                                        : Mono.error(new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                                                "Prestataire de paiement indisponible, réessayez plus tard")));
-                    }
-
-                    // Mobile Money : encaissement RÉEL via le Payment Core du
-                    // kernel (MyCoolPay → MTN/Orange). Best-effort : si le kernel
-                    // est indisponible/non configuré, la facture reste PENDING et
-                    // sera confirmée manuellement par l'école (flux historique).
-                    boolean mobileMoney = method == Invoice.PaymentMethod.MTN_MOMO
-                            || method == Invoice.PaymentMethod.ORANGE_MONEY;
-                    if (mobileMoney && kernelPaymentService.isConfigured()) {
-                        return kernelPaymentService.createMobileMoneyOrder(
-                                invoice.getAmount(), phone,
-                                "Drissman - inscription " + enrollment.getId(),
-                                invoice.getPaymentReference())
-                                .flatMap(order -> {
-                                    String ref = order.id() != null ? order.id() : order.providerReference();
-                                    if (ref != null) invoice.setProviderReference(ref);
-                                    return invoiceRepository.save(invoice);
-                                })
-                                .onErrorResume(e -> {
-                                    log.warn("Payment Core kernel indisponible pour {} : {} — repli confirmation manuelle",
-                                            invoice.getPaymentReference(), e.getMessage());
-                                    return invoiceRepository.save(invoice);
-                                });
-                    }
-
-                    return invoiceRepository.save(invoice);
+                    String provider = (method == Invoice.PaymentMethod.CARD) ? "STRIPE" : "MYCOOLPAY";
+                    String gatewayMethod = (method == Invoice.PaymentMethod.CARD) ? "CARD" : "MOBILE_MONEY";
+                    
+                    return kernelPaymentGatewayClient.initiatePayment(
+                                invoice.getPaymentReference(),
+                                invoice.getAmount(),
+                                provider,
+                                gatewayMethod,
+                                phone,
+                                "Paiement inscription Drissman " + invoice.getPaymentReference()
+                            )
+                            .flatMap(tx -> {
+                                invoice.setProviderReference(tx.path("id").asText(null));
+                                return invoiceRepository.save(invoice)
+                                        .map(saved -> {
+                                            checkoutUrls.put(saved.getId(),
+                                                    tx.path("redirectUrl").asText(null));
+                                            return saved;
+                                        });
+                            })
+                            .onErrorResume(e -> {
+                                e.printStackTrace();
+                                return Mono.error(new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                                            "Service de paiement indisponible, réessayez plus tard"));
+                            });
                 });
     }
 
@@ -165,20 +146,7 @@ public class PaymentService {
                             || invoice.getProviderReference() == null) {
                         return Mono.just(invoice);
                     }
-                    // Mobile Money : statut auprès du Payment Core kernel (MyCoolPay).
-                    boolean mobileMoney = invoice.getPaymentMethod() == Invoice.PaymentMethod.MTN_MOMO
-                            || invoice.getPaymentMethod() == Invoice.PaymentMethod.ORANGE_MONEY;
-                    if (mobileMoney) {
-                        return kernelPaymentService.refreshOrder(invoice.getProviderReference())
-                                .flatMap(order -> applyPaymentStatus(invoice, order.status()))
-                                .onErrorResume(e -> {
-                                    log.debug("Refresh kernel injoignable pour {} : {}",
-                                            invoice.getPaymentReference(), e.getMessage());
-                                    return Mono.just(invoice);
-                                });
-                    }
-                    // Carte (Stripe via Yowyob Payment) : inchangé.
-                    return yowyobPaymentClient.getByReference(invoice.getProviderReference())
+                    return kernelPaymentGatewayClient.getPaymentOrder(invoice.getProviderReference())
                             .flatMap(tx -> {
                                 String status = tx.path("status").asText("").toUpperCase(Locale.ROOT);
                                 if (status.equals("SUCCESS") || status.equals("COMPLETED")
@@ -191,7 +159,7 @@ public class PaymentService {
                                     return invoiceRepository.save(invoice);
                                 }
                                 // Toujours en attente : réexpose l'URL de paiement.
-                                String url = tx.path("stripeCheckoutUrl").asText(null);
+                                String url = tx.path("redirectUrl").asText(null);
                                 if (url != null && !url.isBlank()) {
                                     checkoutUrls.put(invoice.getId(), url);
                                 }
@@ -282,28 +250,13 @@ public class PaymentService {
                 .then();
     }
 
-    /** Applique un statut provider (SUCCESS/FAILED/…) à une facture PENDING. */
-    private Mono<Invoice> applyPaymentStatus(Invoice invoice, String rawStatus) {
-        String status = rawStatus == null ? "" : rawStatus.trim().toUpperCase(Locale.ROOT);
-        if (status.equals("SUCCESS") || status.equals("COMPLETED")
-                || status.equals("PAID") || status.equals("SUCCEEDED")) {
-            return finalizePaid(invoice);
-        }
-        if (status.equals("FAILED") || status.equals("CANCELLED") || status.equals("EXPIRED")) {
-            invoice.setStatus(Invoice.InvoiceStatus.FAILED);
-            return invoiceRepository.save(invoice);
-        }
-        return Mono.just(invoice); // toujours en attente
-    }
-
     /** Transition unique vers PAID : facture réglée, inscription activée, reflet cashier-core. */
     private Mono<Invoice> finalizePaid(Invoice invoice) {
         invoice.setStatus(Invoice.InvoiceStatus.PAID);
         invoice.setPaidAt(LocalDateTime.now());
         return invoiceRepository.save(invoice)
                 .flatMap(saved -> activateEnrollment(saved).thenReturn(saved))
-                .doOnNext(kernelAccountingService::reflectPaidInvoiceInBackground)
-                .doOnNext(kernelNotificationService::notifyPaymentConfirmedInBackground);
+                .doOnNext(kernelAccountingService::reflectPaidInvoiceInBackground);
     }
 
     private Mono<Void> activateEnrollment(Invoice invoice) {

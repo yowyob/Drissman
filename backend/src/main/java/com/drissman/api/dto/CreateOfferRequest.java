@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -35,4 +36,6 @@ public class CreateOfferRequest {
 
     /** URL de l'image de présentation (obtenue via POST /api/images/upload). */
     private String imageUrl;
+
+    private List<UUID> monitorIds;
 }

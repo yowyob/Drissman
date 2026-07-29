@@ -5,7 +5,7 @@ export interface AuthUser {
     email: string;
     firstName: string;
     lastName: string;
-    role: "VISITOR" | "SCHOOL_ADMIN" | "CANDIDAT" | "MONITOR" | "SUPER_ADMIN";
+    role: "VISITOR" | "SCHOOL_ADMIN" | "CANDIDAT" | "STUDENT" | "MONITOR" | "SUPER_ADMIN";
     schoolId?: string;
 }
 

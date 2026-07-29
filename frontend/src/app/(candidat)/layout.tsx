@@ -33,12 +33,12 @@ export default function CandidatLayout({ children }: { children: React.ReactNode
     const router = useRouter();
 
     useEffect(() => {
-        if (!isLoading && (!isAuthenticated || user?.role !== "CANDIDAT")) {
+        if (!isLoading && (!isAuthenticated || (user?.role !== "CANDIDAT" && user?.role !== "STUDENT"))) {
             router.replace("/login");
         }
     }, [isLoading, isAuthenticated, user, router]);
 
-    if (isLoading || !isAuthenticated || user?.role !== "CANDIDAT") {
+    if (isLoading || !isAuthenticated || (user?.role !== "CANDIDAT" && user?.role !== "STUDENT")) {
         return <div className="min-h-screen bg-asphalt flex items-center justify-center"><Loader2 className="h-10 w-10 text-signal animate-spin" /></div>;
     }
 

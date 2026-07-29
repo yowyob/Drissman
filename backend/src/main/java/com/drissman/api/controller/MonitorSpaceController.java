@@ -48,6 +48,14 @@ public class MonitorSpaceController {
         return sessionService.getMonitorSessionsByUserId(userId);
     }
 
+    @GetMapping("/me/sessions/{id}/students")
+    public Flux<MonitorStudentProgressDto> getSessionStudents(Principal principal, @PathVariable UUID id) {
+        if (principal == null) {
+            return Flux.error(new RuntimeException("Authentification requise"));
+        }
+        return sessionService.getSessionStudents(id);
+    }
+
     @PatchMapping("/me/sessions/{id}/complete")
     public Mono<SessionDto> completeMySession(
             Principal principal,

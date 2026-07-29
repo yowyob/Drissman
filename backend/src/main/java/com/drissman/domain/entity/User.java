@@ -46,6 +46,9 @@ public class User {
     @Column("avatar_url")
     private String avatarUrl;
 
+    @Column("push_token")
+    private String pushToken;
+
     @Column("is_active")
     @Builder.Default
     private Boolean isActive = true;
@@ -59,6 +62,7 @@ public class User {
     public enum Role {
         VISITOR,
         CANDIDAT,
+        STUDENT,
         SCHOOL_ADMIN,
         MONITOR,
         SUPER_ADMIN

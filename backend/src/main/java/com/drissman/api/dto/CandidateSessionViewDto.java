@@ -19,6 +19,7 @@ public class CandidateSessionViewDto {
     private UUID enrollmentId;
     private UUID offerId;
     private String offerName;
+    private String schoolName;
     private String monitorName;
     private LocalDate date;
     private LocalTime startTime;

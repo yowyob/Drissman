@@ -19,10 +19,11 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
             router.replace("/login");
         } else if (!isLoading && isAuthenticated && user && !allowedRoles.includes(user.role)) {
             // Redirect to the correct dashboard for their role
-            switch (user.role) {
+            switch (user?.role) {
                 case "SCHOOL_ADMIN":
                     router.replace("/admin");
                     break;
+                case "STUDENT":
                 case "CANDIDAT":
                     router.replace("/candidat");
                     break;

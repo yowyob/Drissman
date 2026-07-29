@@ -41,8 +41,7 @@ public class KernelClient {
                 .build();
     }
 
-    /** Base-url configurée — exposée pour les diagnostics (sans secret). */
-    public String baseUrl() {
+    public String getBaseUrl() {
         return baseUrl;
     }
 

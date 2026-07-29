@@ -43,6 +43,17 @@ public class UserController {
                 .switchIfEmpty(Mono.error(new RuntimeException("Utilisateur non trouve")));
     }
 
+    @PutMapping("/me")
+    public Mono<UserDto> updateMyProfile(
+            Principal principal,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        if (principal == null) {
+            return Mono.error(new RuntimeException("Authentification requise"));
+        }
+        UUID authenticatedUserId = UUID.fromString(principal.getName());
+        return userService.updateProfile(authenticatedUserId, request);
+    }
+
     @PutMapping("/{id}")
     public Mono<UserDto> updateProfile(
             Principal principal,

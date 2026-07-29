@@ -9,7 +9,6 @@ import com.drissman.domain.repository.EnrollmentRepository;
 import com.drissman.domain.repository.OfferRepository;
 import com.drissman.domain.repository.SchoolRepository;
 import com.drissman.domain.repository.UserRepository;
-import com.drissman.kernel.KernelNotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,7 +29,6 @@ public class EnrollmentAppService {
     private final UserRepository userRepository;
     private final SchoolRepository schoolRepository;
     private final PaymentService paymentService;
-    private final KernelNotificationService kernelNotificationService;
 
     public Mono<EnrollmentViewDto> createEnrollment(UUID userId, UUID offerId) {
         Mono<User> userMono = userRepository.findById(userId)
@@ -56,7 +54,7 @@ public class EnrollmentAppService {
 
                                 Mono<User> normalizedUserMono;
                                 if (user.getRole() == User.Role.VISITOR) {
-                                    user.setRole(User.Role.CANDIDAT);
+                                    user.setRole(User.Role.STUDENT);
                                     normalizedUserMono = userRepository.save(user);
                                 } else {
                                     normalizedUserMono = Mono.just(user);
@@ -76,9 +74,6 @@ public class EnrollmentAppService {
                                             .build();
 
                                     return enrollmentRepository.save(enrollment)
-                                            // Notification native kernel (best-effort) : accusé de réception.
-                                            .doOnNext(e -> kernelNotificationService
-                                                    .notifyEnrollmentCreatedInBackground(savedUser, offer))
                                             .flatMap(this::toViewDto);
                                 });
                             });
@@ -153,9 +148,9 @@ public class EnrollmentAppService {
                             .offerId(enrollment.getOfferId())
                             .offerName(offer.getName())
                             .price(offer.getPrice() != null ? offer.getPrice() : 0)
-                            .hours(enrollment.getHoursPurchased())
+                            .hours(enrollment.getHoursPurchased() != null ? enrollment.getHoursPurchased() : 0)
                             .hoursConsumed(enrollment.getHoursConsumed() != null ? enrollment.getHoursConsumed() : 0)
-                            .hoursRemaining(enrollment.getRemainingHours() != null ? enrollment.getRemainingHours() : 0)
+                            .hoursRemaining((enrollment.getHoursPurchased() != null ? enrollment.getHoursPurchased() : 0) - (enrollment.getHoursConsumed() != null ? enrollment.getHoursConsumed() : 0))
                             .permitType(offer.getPermitType() != null ? offer.getPermitType() : "B")
                             .schoolId(enrollment.getSchoolId())
                             .schoolName(school.getName())

@@ -61,3 +61,7 @@ extracted_text/
 
 # Uploads locaux (images archivees dans le kernel)
 backend/uploads/
+
+# Service Accounts & Credentials
+*firebase-service-account*.json
+

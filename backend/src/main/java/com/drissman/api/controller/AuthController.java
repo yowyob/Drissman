@@ -4,6 +4,7 @@ import com.drissman.api.dto.AuthResponse;
 import com.drissman.api.dto.LoginRequest;
 import com.drissman.api.dto.RegisterRequest;
 import com.drissman.api.dto.UpgradeVisitorRoleRequest;
+import com.drissman.api.dto.GoogleLoginRequest;
 import com.drissman.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,11 @@ public class AuthController {
     @PostMapping("/login")
     public Mono<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/google")
+    public Mono<AuthResponse> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
+        return authService.loginWithGoogle(request);
     }
 
     @PostMapping("/upgrade-visitor")

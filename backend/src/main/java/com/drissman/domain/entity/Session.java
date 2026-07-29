@@ -33,6 +33,9 @@ public class Session {
     @Column("enrollment_id")
     private UUID enrollmentId;
 
+    @Column("school_id")
+    private UUID schoolId;
+
     @Column("monitor_id")
     private UUID monitorId; // Can be null if not yet assigned
 
@@ -75,11 +78,22 @@ public class Session {
     }
 
     /**
+     * Calculate the duration of this session in minutes.
+     */
+    public int getDurationMinutes() {
+        if (startTime == null || endTime == null)
+            return 0;
+        return (int) java.time.Duration.between(startTime, endTime).toMinutes();
+    }
+
+    /**
      * Calculate the duration of this session in hours.
      */
     public int getDurationHours() {
         if (startTime == null || endTime == null)
-            return 0;
-        return (int) java.time.Duration.between(startTime, endTime).toHours();
+            return 1;
+        long minutes = java.time.Duration.between(startTime, endTime).toMinutes();
+        int hours = (int) Math.round(minutes / 60.0);
+        return Math.max(1, hours);
     }
 }

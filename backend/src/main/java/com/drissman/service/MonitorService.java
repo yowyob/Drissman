@@ -30,7 +30,6 @@ public class MonitorService {
     private final UserRepository userRepository;
     private final SchoolRepository schoolRepository;
     private final PasswordEncoder passwordEncoder;
-    private final com.drissman.kernel.KernelHrmService kernelHrmService;
 
     @Transactional
     public Mono<MonitorDto> createMonitor(UUID schoolId, CreateMonitorRequest request) {
@@ -51,6 +50,9 @@ public class MonitorService {
                     .build();
 
             return userRepository.save(newUser)
+                    .onErrorResume(org.springframework.dao.DuplicateKeyException.class, e -> Mono.error(
+                            new ResponseStatusException(HttpStatus.CONFLICT,
+                                    "Cette adresse e-mail est déjà utilisée par un autre utilisateur")))
                     .flatMap(savedUser -> saveMonitorEntity(schoolId, request, savedUser.getId()));
         } else {
             return saveMonitorEntity(schoolId, request, null);
@@ -63,6 +65,7 @@ public class MonitorService {
                 .userId(userId)
                 .firstName(request.getFirstName() != null ? request.getFirstName().trim() : null)
                 .lastName(request.getLastName() != null ? request.getLastName().trim() : null)
+                .email(request.getEmail() != null ? request.getEmail().trim() : null)
                 // Licence optionnelle : une valeur vide devient NULL (PostgreSQL
                 // autorise plusieurs NULL sous une contrainte d'unicité), ce qui
                 // permet de créer des moniteurs dont le permis n'est pas renseigné.
@@ -73,9 +76,7 @@ public class MonitorService {
                 .build();
 
         return monitorRepository.save(monitor)
-                // Miroir HRM kernel (best-effort) : moniteur -> employé de l'organisation.
-                .doOnNext(kernelHrmService::mirrorMonitorInBackground)
-                .map(this::mapToDto)
+                .flatMap(this::enrichDtoWithEmail)
                 // Doublon de numéro de permis : erreur métier claire (409) au lieu
                 // d'une 500 brute remontant la contrainte SQL.
                 .onErrorResume(org.springframework.dao.DuplicateKeyException.class, e -> Mono.error(
@@ -92,22 +93,21 @@ public class MonitorService {
     }
 
     public Flux<MonitorDto> getMonitorsBySchool(UUID schoolId) {
-        return monitorRepository.findBySchoolId(schoolId).map(this::mapToDto);
+        return monitorRepository.findBySchoolId(schoolId).flatMap(this::enrichDtoWithEmail);
     }
 
     public Mono<MonitorDto> getMonitorById(UUID monitorId) {
-        return monitorRepository.findById(monitorId).map(this::mapToDto);
+        return monitorRepository.findById(monitorId).flatMap(this::enrichDtoWithEmail);
     }
 
     public Mono<MonitorDto> getMonitorByUserId(UUID userId) {
         return monitorRepository.findByUserId(userId)
                 .flatMap(monitor -> schoolRepository.findById(monitor.getSchoolId())
-                        .map(school -> {
-                            MonitorDto dto = mapToDto(monitor);
+                        .flatMap(school -> enrichDtoWithEmail(monitor).map(dto -> {
                             dto.setSchoolName(school.getName());
                             return dto;
-                        })
-                        .defaultIfEmpty(mapToDto(monitor)));
+                        }))
+                        .switchIfEmpty(enrichDtoWithEmail(monitor)));
     }
 
     @Transactional
@@ -126,8 +126,26 @@ public class MonitorService {
                         monitor.setPhoneNumber(request.getPhoneNumber());
                     if (request.getStatus() != null)
                         monitor.setStatus(request.getStatus());
+                    if (request.getEmail() != null)
+                        monitor.setEmail(request.getEmail().trim());
 
-                    return monitorRepository.save(monitor).map(this::mapToDto);
+                    Mono<Void> updateUserMono = Mono.empty();
+                    if (monitor.getUserId() != null && (request.getEmail() != null || request.getPassword() != null)) {
+                        updateUserMono = userRepository.findById(monitor.getUserId())
+                                .flatMap(user -> {
+                                    if (request.getEmail() != null && !request.getEmail().isBlank()) {
+                                        user.setEmail(request.getEmail().trim().toLowerCase());
+                                    }
+                                    if (request.getPassword() != null && !request.getPassword().isBlank()) {
+                                        user.setPassword(passwordEncoder.encode(request.getPassword().trim()));
+                                    }
+                                    return userRepository.save(user).then();
+                                });
+                    }
+
+                    return updateUserMono
+                            .then(monitorRepository.save(monitor))
+                            .flatMap(this::enrichDtoWithEmail);
                 });
     }
 
@@ -145,12 +163,29 @@ public class MonitorService {
                 });
     }
 
+    private Mono<MonitorDto> enrichDtoWithEmail(Monitor monitor) {
+        MonitorDto dto = mapToDto(monitor);
+        if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
+            return Mono.just(dto);
+        }
+        if (monitor.getUserId() != null) {
+            return userRepository.findById(monitor.getUserId())
+                    .map(user -> {
+                        dto.setEmail(user.getEmail());
+                        return dto;
+                    })
+                    .defaultIfEmpty(dto);
+        }
+        return Mono.just(dto);
+    }
+
     private MonitorDto mapToDto(Monitor monitor) {
         return MonitorDto.builder()
                 .id(monitor.getId())
                 .schoolId(monitor.getSchoolId())
                 .firstName(monitor.getFirstName())
                 .lastName(monitor.getLastName())
+                .email(monitor.getEmail())
                 .licenseNumber(monitor.getLicenseNumber())
                 .phoneNumber(monitor.getPhoneNumber())
                 .userId(monitor.getUserId())

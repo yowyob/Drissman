@@ -42,5 +42,6 @@ public class SchoolDto {
         private Integer hours;
         private String permitType;
         private String imageUrl;
+        private List<UUID> monitorIds;
     }
 }

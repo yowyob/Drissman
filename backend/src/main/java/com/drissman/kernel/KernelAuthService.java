@@ -50,8 +50,7 @@ public class KernelAuthService {
                 .subscribe(
                         v -> {
                         },
-                        e -> KernelMirrorLog.fail("user-sync", user.getEmail(), e),
-                        () -> KernelMirrorLog.ok("user-sync", user.getEmail(), "compte-miroir synchronisé"));
+                        e -> log.warn("Sync kernel échouée pour {} : {}", user.getEmail(), e.getMessage()));
     }
 
     /**
@@ -75,7 +74,7 @@ public class KernelAuthService {
      * Stratégie login-first : tente le login kernel avec le mot de passe dérivé ;
      * si le compte n'existe pas encore, le crée (sign-up) puis stocke le token.
      */
-    Mono<Void> syncUser(User user) {
+    public Mono<Void> syncUser(User user) {
         String kernelPassword = derivedPassword(user.getId());
         return kernelLogin(user.getEmail(), kernelPassword)
                 .onErrorResume(e -> {
@@ -112,8 +111,7 @@ public class KernelAuthService {
     /** Extrait token + id kernel de la réponse, persiste l'id et met le token en cache. */
     private Mono<User> storeSession(User user, KernelResponse response) {
         if (response.getData() == null) {
-            KernelMirrorLog.skip("user-sync", user.getEmail(),
-                    "réponse kernel sans data : " + response.getMessage());
+            log.warn("Réponse kernel sans data pour {} : {}", user.getEmail(), response.getMessage());
             return Mono.just(user);
         }
 
@@ -123,38 +121,19 @@ public class KernelAuthService {
             tokenStore.put(user.getId(), accessToken, ttl);
         } else if ("EMAIL_VERIFICATION_REQUIRED".equals(response.getData().path("status").asText(""))) {
             // Compte-miroir créé mais en attente de vérification email côté kernel.
-            // Le token sera obtenu au prochain login une fois l'email vérifié
-            // (ou la vérification désactivée pour notre ClientApplication).
-            KernelMirrorLog.skip("user-sync", user.getEmail(),
-                    "compte-miroir en attente de vérification email (EMAIL_VERIFICATION_REQUIRED)");
+            log.info("Compte-miroir kernel créé pour {} — en attente de vérification email", user.getEmail());
+            return Mono.error(new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "EMAIL_VERIFICATION_REQUIRED"));
         } else {
-            KernelMirrorLog.skip("user-sync", user.getEmail(),
-                    "pas d'accessToken kernel (nextStep=" + response.getData().path("nextStep").asText("")
-                            + ", status=" + response.getData().path("status").asText("") + ")");
+            log.warn("Pas d'accessToken kernel pour {} (nextStep={}, status={})",
+                    user.getEmail(),
+                    response.getData().path("nextStep").asText(""),
+                    response.getData().path("status").asText(""));
         }
 
-        // L'id du compte-miroir est propre à un TENANT. Si le tenant de Drissman
-        // change (bascule vers l'espace dédié de l'organisation), le kernel renvoie
-        // un id différent : il faut alors ÉCRASER la valeur stockée, sinon on garde
-        // un kernelUserId périmé pointant vers l'ancien espace — ce qui casserait
-        // silencieusement le ciblage des pièces personnelles (CNI, permis).
         String kernelId = response.getData().path("id").asText(null);
-        if (kernelId != null && !kernelId.isBlank()) {
-            UUID parsed;
-            try {
-                parsed = UUID.fromString(kernelId);
-            } catch (IllegalArgumentException e) {
-                parsed = null;
-            }
-            if (parsed != null && !parsed.equals(user.getKernelUserId())) {
-                UUID previous = user.getKernelUserId();
-                user.setKernelUserId(parsed);
-                if (previous != null) {
-                    KernelMirrorLog.ok("user-sync", user.getEmail(),
-                            "kernelUserId resynchronisé (" + previous + " -> " + parsed + ")");
-                }
-                return userRepository.save(user);
-            }
+        if (kernelId != null && user.getKernelUserId() == null) {
+            user.setKernelUserId(UUID.fromString(kernelId));
+            return userRepository.save(user);
         }
         return Mono.just(user);
     }

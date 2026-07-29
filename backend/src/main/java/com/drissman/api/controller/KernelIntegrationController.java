@@ -106,7 +106,7 @@ public class KernelIntegrationController {
     /** Configuration kernel effective (sans secret) — diagnostic sans SSH. */
     private Map<String, Object> config() {
         Map<String, Object> cfg = new LinkedHashMap<>();
-        cfg.put("baseUrl", kernelClient.baseUrl());
+        cfg.put("baseUrl", kernelClient.getBaseUrl());
         cfg.put("clientIdConfigured", clientId != null && !clientId.isBlank());
         // Préfixe seul : suffit à distinguer l'ancien tenant (11111111…)
         // du nouveau (94b5ac75…) sans divulguer l'identifiant complet.

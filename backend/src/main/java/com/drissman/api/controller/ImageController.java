@@ -57,9 +57,25 @@ public class ImageController {
     @GetMapping("/{filename}")
     public ResponseEntity<Resource> getImage(@PathVariable String filename) {
         Resource file = storageService.load(filename);
+        MediaType mediaType = determineMediaType(filename);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + file.getFilename() + "\"")
-                .contentType(MediaType.IMAGE_JPEG) // You might want to detect this dynamically
+                .contentType(mediaType)
                 .body(file);
+    }
+
+    private MediaType determineMediaType(String filename) {
+        if (filename == null) return MediaType.APPLICATION_OCTET_STREAM;
+        String lower = filename.toLowerCase();
+        if (lower.endsWith(".pdf")) return MediaType.APPLICATION_PDF;
+        if (lower.endsWith(".png")) return MediaType.IMAGE_PNG;
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return MediaType.IMAGE_JPEG;
+        if (lower.endsWith(".gif")) return MediaType.IMAGE_GIF;
+        if (lower.endsWith(".webp")) return MediaType.parseMediaType("image/webp");
+        if (lower.endsWith(".svg")) return MediaType.parseMediaType("image/svg+xml");
+        if (lower.endsWith(".txt")) return MediaType.TEXT_PLAIN;
+        if (lower.endsWith(".doc")) return MediaType.parseMediaType("application/msword");
+        if (lower.endsWith(".docx")) return MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        return MediaType.APPLICATION_OCTET_STREAM;
     }
 }

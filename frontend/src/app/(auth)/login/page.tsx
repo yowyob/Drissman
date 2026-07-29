@@ -27,15 +27,19 @@ export default function LoginPage() {
             const response = await login({ email, password });
             toast.success("Connexion réussie !");
             // Role-based redirect
-            switch (response.user.role) {
+            switch (response?.user?.role) {
                 case "SCHOOL_ADMIN":
                     router.push("/admin");
                     break;
+                case "STUDENT":
                 case "CANDIDAT":
                     router.push("/candidat");
                     break;
                 case "MONITOR":
                     router.push("/monitor");
+                    break;
+                case "SUPER_ADMIN":
+                    router.push("/superadmin");
                     break;
                 case "VISITOR":
                     router.push("/visitor");

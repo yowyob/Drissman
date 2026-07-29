@@ -4,7 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import java.util.List;
+import java.util.UUID;
 @Data
 @Builder
 @NoArgsConstructor
@@ -16,4 +17,5 @@ public class UpdateOfferRequest {
     private Integer hours;
     private String permitType;
     private String imageUrl;
+    private List<UUID> monitorIds;
 }

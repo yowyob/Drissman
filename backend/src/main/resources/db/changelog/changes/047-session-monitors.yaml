@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - changeSet:
+      id: 047-create-session-monitors-table
+      author: antigravity
+      changes:
+        - createTable:
+            tableName: session_monitors
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: session_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: monitor_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addForeignKeyConstraint:
+            baseTableName: session_monitors
+            baseColumnNames: session_id
+            constraintName: fk_session_monitors_session
+            referencedTableName: sessions
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: session_monitors
+            baseColumnNames: monitor_id
+            constraintName: fk_session_monitors_monitor
+            referencedTableName: monitors
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - sql:
+            dbms: postgresql
+            sql: |
+              INSERT INTO session_monitors (id, session_id, monitor_id, created_at)
+              SELECT gen_random_uuid(), id, monitor_id, CURRENT_TIMESTAMP
+              FROM sessions
+              WHERE monitor_id IS NOT NULL;

@@ -14,7 +14,6 @@ public interface SessionRepository extends ReactiveCrudRepository<Session, UUID>
 
     Flux<Session> findByDateBetween(LocalDate startDate, LocalDate endDate);
 
-    @org.springframework.data.r2dbc.repository.Query("SELECT s.* FROM sessions s JOIN enrollments e ON s.enrollment_id = e.id WHERE e.school_id = :schoolId")
     Flux<Session> findBySchoolId(UUID schoolId);
 
     /**
