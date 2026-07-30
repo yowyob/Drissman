@@ -8,7 +8,12 @@
 
 import { useEffect, useState } from "react";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+const getApiBaseUrl = () => {
+  const raw = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api").trim().replace(/\/$/, "");
+  return raw.endsWith("/api") ? raw : `${raw}/api`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 const PROBE_TIMEOUT_MS = 4000;
 const PROBE_INTERVAL_MS = 25_000;
 

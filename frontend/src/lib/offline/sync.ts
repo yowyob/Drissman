@@ -11,7 +11,12 @@ import { offlineDb, type QueuedOperation } from "./db";
 import { applyVerdict, recoverInterrupted, selectSyncable, type ServerVerdict } from "./sync-core";
 import { notifyBackendState } from "./network";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+const getApiBaseUrl = () => {
+  const raw = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api").trim().replace(/\/$/, "");
+  return raw.endsWith("/api") ? raw : `${raw}/api`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 const BATCH_SIZE = 25;
 
 export interface SyncOutcome {

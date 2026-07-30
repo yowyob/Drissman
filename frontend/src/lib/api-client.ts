@@ -1,4 +1,9 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+const getApiBaseUrl = () => {
+    const raw = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api").trim().replace(/\/$/, "");
+    return raw.endsWith("/api") ? raw : `${raw}/api`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 interface RequestOptions extends RequestInit {
     token?: string;
