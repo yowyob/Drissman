@@ -16,10 +16,13 @@ export interface SessionEnrollmentOptionDto {
   hoursConsumed: number;
 }
 
+// Modèle mobile : une séance est rattachée à des OFFRES (groupe), pas à une
+// inscription individuelle. Le backend notifie automatiquement tous les élèves
+// inscrits aux offres liées. offerIds / monitorIds sont donc des LISTES.
 export interface SessionDto {
   id: string;
-  enrollmentId: string;
-  monitorId?: string;
+  offerIds: string[];
+  monitorIds: string[];
   moduleId?: string;
   lessonId?: string;
   date: string;
@@ -32,8 +35,8 @@ export interface SessionDto {
 }
 
 export interface CreateSessionPayload {
-  enrollmentId: string;
-  monitorId?: string;
+  offerIds: string[];
+  monitorIds?: string[];
   moduleId?: string;
   lessonId?: string;
   date: string;

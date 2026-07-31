@@ -138,45 +138,33 @@ export default function PlanningPage() {
     if (!form.monitorId) return toast.error("Moniteur obligatoire");
     if (!form.startTime || !form.endTime || form.startTime >= form.endTime) return toast.error("Plage horaire invalide");
     if (availableLessons.length > 0 && !form.lessonId) return toast.error("Lecon obligatoire");
-    if (enrollments.length === 0) return toast.error("Aucun eleve eligible pour cette offre a cette date");
 
     setSubmitting(true);
     try {
-      const results = await Promise.allSettled(
-        enrollments.map((enrollment) =>
-          adminSessionService.create(
-            {
-              enrollmentId: enrollment.enrollmentId,
-              monitorId: form.monitorId,
-              moduleId: isUuid(form.moduleId) ? form.moduleId : undefined,
-              lessonId: isUuid(form.lessonId) ? form.lessonId : undefined,
-              date: form.date,
-              startTime: form.startTime,
-              endTime: form.endTime,
-              meetingPoint: form.meetingPoint,
-            },
-            token,
-          ),
-        ),
+      // Modèle mobile : UNE séance rattachée à l'offre (groupe). Le backend
+      // notifie automatiquement les élèves inscrits à cette offre — on ne crée
+      // donc plus une séance par élève.
+      const created = await adminSessionService.create(
+        {
+          offerIds: [form.offerId],
+          monitorIds: form.monitorId ? [form.monitorId] : [],
+          moduleId: isUuid(form.moduleId) ? form.moduleId : undefined,
+          lessonId: isUuid(form.lessonId) ? form.lessonId : undefined,
+          date: form.date,
+          startTime: form.startTime,
+          endTime: form.endTime,
+          meetingPoint: form.meetingPoint,
+        },
+        token,
       );
 
-      const successSessions = results
-        .filter((r): r is PromiseFulfilledResult<SessionDto> => r.status === "fulfilled")
-        .map((r) => r.value);
-      const failedCount = results.length - successSessions.length;
-
-      if (successSessions.length > 0) {
-        setCreatedSessions((prev) => [...successSessions, ...prev]);
-      }
+      setCreatedSessions((prev) => [created, ...prev]);
       setForm((prev) => ({ ...emptyForm, date: prev.date, offerId: prev.offerId, monitorId: prev.monitorId, meetingPoint: prev.meetingPoint, moduleId: prev.moduleId, lessonId: prev.lessonId }));
-
-      if (successSessions.length > 0 && failedCount === 0) {
-        toast.success(`${successSessions.length} seance(s) programmee(s)`);
-      } else if (successSessions.length > 0) {
-        toast.warning(`${successSessions.length} seance(s) creee(s), ${failedCount} echec(s)`);
-      } else {
-        toast.error("Creation impossible pour les eleves selectionnes");
-      }
+      toast.success(
+        enrollments.length > 0
+          ? `Seance programmee — ${enrollments.length} eleve(s) notifie(s)`
+          : "Seance programmee",
+      );
     } catch (error: any) {
       toast.error(error.message || "Creation impossible");
     } finally {

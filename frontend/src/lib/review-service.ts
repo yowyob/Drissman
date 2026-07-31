@@ -23,9 +23,21 @@ export const reviewService = {
     getForSchool: (schoolId: string) =>
         apiClient.get<ReviewDto[]>(`/reviews/school/${schoolId}`),
 
-    /** L'utilisateur courant peut-il laisser un avis ? (élève inscrit, non doublon) */
-    getEligibility: (schoolId: string, token: string) =>
-        apiClient.get<ReviewEligibility>(`/reviews/eligibility/${schoolId}`, token),
+    /**
+     * L'utilisateur courant peut-il laisser un avis ? (élève inscrit, non doublon)
+     *
+     * Le backend MOBILE (cible de prod) n'expose PAS cet endpoint. Dégradation
+     * optimiste : on autorise l'affichage du formulaire, car `create` re-valide
+     * l'inscription côté serveur (sécurité maintenue) — un non-éligible sera
+     * rejeté au POST avec un message.
+     */
+    getEligibility: async (schoolId: string, token: string): Promise<ReviewEligibility> => {
+        try {
+            return await apiClient.get<ReviewEligibility>(`/reviews/eligibility/${schoolId}`, token);
+        } catch {
+            return { canReview: true, hasEnrollment: true, alreadyReviewed: false, reason: null };
+        }
+    },
 
     /** Soumet un avis (le backend re-valide l'inscription — sécurité serveur). */
     create: (schoolId: string, rating: number, comment: string, token: string) =>

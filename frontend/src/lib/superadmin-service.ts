@@ -67,6 +67,13 @@ export interface GlobalStatsDto {
     recentActivities: RecentActivityDto[];
 }
 
+// Le backend MOBILE (cible de prod) n'expose PAS la revue KYC super-admin
+// (rejet d'école + revue documentaire des écoles/moniteurs). Ces méthodes
+// dégradent proprement pour que l'écran super-admin fonctionne sans planter :
+// lectures -> liste vide (état "aucune pièce"), écritures -> message clair.
+// La validation/toggle des écoles et des utilisateurs reste pleinement supportée.
+const KYC_UNAVAILABLE = "Revue documentaire indisponible sur ce backend.";
+
 export const superAdminService = {
     getStats: (token: string) =>
         apiClient.get<GlobalStatsDto>("/superadmin/stats", token),
@@ -77,8 +84,13 @@ export const superAdminService = {
     validateSchool: (id: string, token: string) =>
         apiClient.put<School>(`/superadmin/schools/${id}/validate`, undefined, token),
 
-    rejectSchool: (id: string, reason: string, token: string) =>
-        apiClient.put<School>(`/superadmin/schools/${id}/reject`, { reason }, token),
+    rejectSchool: async (id: string, reason: string, token: string) => {
+        try {
+            return await apiClient.put<School>(`/superadmin/schools/${id}/reject`, { reason }, token);
+        } catch {
+            throw new Error(KYC_UNAVAILABLE);
+        }
+    },
 
     getAllSchools: (token: string) =>
         apiClient.get<School[]>("/superadmin/schools", token),
@@ -93,22 +105,42 @@ export const superAdminService = {
         apiClient.put<User>(`/superadmin/users/${id}/toggle-active`, undefined, token),
 
     /** Checklist documentaire d'une école (pour la revue super-admin). */
-    getSchoolDocuments: (schoolId: string, token: string) =>
-        apiClient.get<DocumentChecklistItem[]>(`/superadmin/schools/${schoolId}/documents`, token),
+    getSchoolDocuments: async (schoolId: string, token: string) => {
+        try {
+            return await apiClient.get<DocumentChecklistItem[]>(`/superadmin/schools/${schoolId}/documents`, token);
+        } catch {
+            return [] as DocumentChecklistItem[];
+        }
+    },
 
     /** Moniteurs d'une école (pour accéder à leur revue documentaire). */
-    getSchoolMonitors: (schoolId: string, token: string) =>
-        apiClient.get<SchoolMonitor[]>(`/superadmin/schools/${schoolId}/monitors`, token),
+    getSchoolMonitors: async (schoolId: string, token: string) => {
+        try {
+            return await apiClient.get<SchoolMonitor[]>(`/superadmin/schools/${schoolId}/monitors`, token);
+        } catch {
+            return [] as SchoolMonitor[];
+        }
+    },
 
     /** Checklist documentaire d'un moniteur. */
-    getMonitorDocuments: (monitorId: string, token: string) =>
-        apiClient.get<DocumentChecklistItem[]>(`/superadmin/monitors/${monitorId}/documents`, token),
+    getMonitorDocuments: async (monitorId: string, token: string) => {
+        try {
+            return await apiClient.get<DocumentChecklistItem[]>(`/superadmin/monitors/${monitorId}/documents`, token);
+        } catch {
+            return [] as DocumentChecklistItem[];
+        }
+    },
 
     /** Revue d'une pièce : decision = "APPROVE" | "REJECT". Renvoie la checklist à jour. */
-    reviewDocument: (documentId: string, decision: "APPROVE" | "REJECT", notes: string | undefined, token: string) =>
-        apiClient.put<DocumentChecklistItem[]>(
-            `/superadmin/documents/${documentId}/review`,
-            { decision, notes },
-            token
-        ),
+    reviewDocument: async (documentId: string, decision: "APPROVE" | "REJECT", notes: string | undefined, token: string) => {
+        try {
+            return await apiClient.put<DocumentChecklistItem[]>(
+                `/superadmin/documents/${documentId}/review`,
+                { decision, notes },
+                token
+            );
+        } catch {
+            throw new Error(KYC_UNAVAILABLE);
+        }
+    },
 };
