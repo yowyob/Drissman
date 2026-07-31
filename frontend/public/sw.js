@@ -11,7 +11,10 @@
  *    /api/sync, ni aucune réponse d'API (jetons, données sensibles).
  */
 
-const VERSION = "drissman-sw-v1";
+// Bump à chaque changement susceptible d'invalider le cache du shell/bundles
+// (ex. changement de NEXT_PUBLIC_API_URL bake dans le bundle). L'activate
+// purge tous les caches d'une version antérieure.
+const VERSION = "drissman-sw-v2";
 const STATIC_CACHE = `${VERSION}-static`;
 const PAGE_CACHE = `${VERSION}-pages`;
 
