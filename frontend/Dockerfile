@@ -21,6 +21,14 @@ COPY . .
 # Uncomment the following line in case you want to disable telemetry during the build.
 ENV NEXT_TELEMETRY_DISABLED 1
 
+# URL du backend de prod, bakée dans le bundle client au build.
+# ⚠️ Domaine à UN « s » (drisman), chemin backend à DEUX « s » (/drissman-api),
+# tel que routé par Traefik sur le VPS. Le code ajoute /api automatiquement.
+# Surchargeable au build : docker build --build-arg NEXT_PUBLIC_API_URL=...
+# Défini en ENV (priorité maximale) pour gagner sur tout fichier .env résiduel.
+ARG NEXT_PUBLIC_API_URL=https://drisman.yowyob.com/drissman-api
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
 RUN npm run build
 
 # Production image, copy all the files and run next

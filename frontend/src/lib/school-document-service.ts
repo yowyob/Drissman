@@ -1,7 +1,7 @@
 import { apiClient } from "@/lib/api-client";
 
 const getApiBaseUrl = () => {
-  const raw = (process.env.NEXT_PUBLIC_API_URL || "https://backend-production-ddd8.up.railway.app/api").trim().replace(/\/$/, "");
+  const raw = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api").trim().replace(/\/$/, "");
   return raw.endsWith("/api") ? raw : `${raw}/api`;
 };
 
