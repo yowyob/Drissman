@@ -40,11 +40,42 @@ jobs:
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend
 
+      - name: Generate deployable frontend Dockerfile
+        shell: bash
+        run: |
+          cat > ./frontend/Dockerfile.ci <<'DOCKERFILE'
+          FROM node:20-alpine AS build
+          WORKDIR /app
+          ENV NEXT_TELEMETRY_DISABLED=1
+          ARG NEXT_PUBLIC_API_URL
+          ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+          COPY package.json package-lock.json* ./
+          RUN npm install --no-audit --no-fund --legacy-peer-deps
+          COPY . .
+          RUN mkdir -p public && npm run build
+
+          FROM node:20-alpine AS runtime
+          WORKDIR /app
+          ENV NODE_ENV=production
+          ENV NEXT_TELEMETRY_DISABLED=1
+          ENV PORT=3000
+          ENV HOSTNAME=0.0.0.0
+          RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
+          COPY --from=build /app/package.json /app/package-lock.json* ./
+          COPY --from=build /app/node_modules ./node_modules
+          COPY --from=build /app/.next ./.next
+          COPY --from=build /app/public ./public
+          COPY --from=build /app/next.config.* ./
+          USER nextjs
+          EXPOSE 3000
+          CMD ["npm", "run", "start"]
+          DOCKERFILE
+
       - name: Build and push frontend
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
-          file: ./frontend/Dockerfile
+          file: ./frontend/Dockerfile.ci
           push: true
           build-args: |
             NEXT_PUBLIC_API_URL=https://drisman.yowyob.com/drissman-api
